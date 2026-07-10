@@ -1,0 +1,96 @@
+<?php
+require_once 'includes/auth.php';
+$paginaActiva = 'registrar_egreso';
+$tituloPagina = 'Registrar Egreso';
+require_once 'includes/header.php';
+?>
+
+<section class="card-panel">
+    <h2>Registrar Nuevo Egreso</h2>
+    <div id="alert-message" class="alert"></div>
+
+    <form id="form-movimiento">
+        <input type="hidden" name="tipo" value="egreso" />
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="concepto">Concepto</label>
+                <div class="input-group">
+                    <select id="concepto" name="concepto" required>
+                        <option value="" disabled selected>Cargando conceptos...</option>
+                    </select>
+                    <button type="button" id="btn-open-modal" class="btn-icon" title="Agregar Concepto">+</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cantidad">Cantidad</label>
+                <input type="number" id="cantidad" name="cantidad" min="1" value="1" required />
+            </div>
+
+            <div class="form-group">
+                <label for="precio">Precio Unit. (USD)</label>
+                <input type="number" id="precio" name="precio" step="0.01" min="0.01" placeholder="0.00" required />
+            </div>
+
+            <div class="form-group">
+                <label>Total Calculado</label>
+                <div class="total-box" id="total-display">$0.00</div>
+            </div>
+
+            <div class="form-group">
+                <label for="fuente">Fuente / Proveedor</label>
+                <input type="text" id="fuente" name="fuente" placeholder="Ej: Proveedor General" required />
+            </div>
+
+            <div class="form-group">
+                <label for="forma_pago">Forma de Pago</label>
+                <select id="forma_pago" name="forma_pago" required>
+                    <option value="" disabled selected>Cargando...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="banco">Banco (opcional)</label>
+                <div class="input-group">
+                    <select id="banco" name="banco">
+                        <option value="">Sin especificar</option>
+                    </select>
+                    <button type="button" id="btn-open-modal-banco" class="btn-icon" title="Agregar Banco">+</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="proveedor">Proveedor (opcional)</label>
+                <div class="input-group">
+                    <select id="proveedor" name="proveedor">
+                        <option value="">Sin especificar</option>
+                    </select>
+                    <button type="button" id="btn-open-modal-proveedor" class="btn-icon" title="Agregar Proveedor">+</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="numero_factura">N&deg; Factura (opcional)</label>
+                <input type="text" id="numero_factura" name="numero_factura" placeholder="Ej: 00123" />
+            </div>
+
+            <div class="form-group">
+                <label for="fuente_referencia">Referencia (opcional)</label>
+                <input type="text" id="fuente_referencia" name="fuente_referencia" placeholder="Ej: N&deg; de transferencia" />
+            </div>
+        </div>
+
+        <div style="text-align: right;">
+            <button type="submit" class="submit-btn" style="max-width: 250px; background-color: var(--danger);">Registrar Egreso</button>
+        </div>
+    </form>
+</section>
+
+<?php require_once 'includes/footer.php'; ?>
+<script src="assets/js/registrar-movimiento.js"></script>
+<script>
+initRegistrarMovimiento({ tipo: 'egreso', mostrarProveedor: true });
+</script>
+</body>
+</html>
