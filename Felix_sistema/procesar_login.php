@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $resultado = mysqli_query($conn, $sql);
 
     if ($resultado && mysqli_num_rows($resultado) > 0) {
-        $row = mysqli_fetch_assoc(resultado);
+        $row = mysqli_fetch_assoc($resultado);
         
         // Verificar contraseña con el hash de la Base de Datos
         if (password_verify($password, $row['password'])) {
