@@ -1,5 +1,6 @@
 let chartTorta = null;
 let chartBarras = null;
+let chartMensual = null;
 
 function initEstadisticas() {
     const inputMesDesde = document.getElementById('mes-desde');
@@ -15,6 +16,7 @@ function initEstadisticas() {
             if (resultado.exito) {
                 renderizarGraficoTorta(resultado.totales_tipo);
                 renderizarGraficoBarras(resultado.totales_concepto);
+                renderizarGraficoMensual(resultado.totales_mes || []);
             }
         } catch (error) {
             console.error(error);
@@ -65,6 +67,41 @@ function renderizarGraficoTorta(datosTipo) {
             datasets: [{ data: valores.length ? valores : [1], backgroundColor: valores.length ? colores : ['#e9ecef'] }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Proporción Ingresos / Egresos' } } }
+    });
+}
+
+function renderizarGraficoMensual(datosMes) {
+    const canvas = document.getElementById('graficoMensual');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (chartMensual) chartMensual.destroy();
+
+    const meses = [...new Set(datosMes.map(d => d.mes))];
+    const ingresos = meses.map(mes => {
+        const fila = datosMes.find(d => d.mes === mes && d.tipo === 'ingreso');
+        return fila ? parseFloat(fila.total) : 0;
+    });
+    const egresos = meses.map(mes => {
+        const fila = datosMes.find(d => d.mes === mes && d.tipo === 'egreso');
+        return fila ? parseFloat(fila.total) : 0;
+    });
+    const balance = meses.map((_, i) => ingresos[i] - egresos[i]);
+
+    chartMensual = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: meses.length ? meses : ['Sin registros'],
+            datasets: [
+                { label: 'Ingresos ($)', data: ingresos, backgroundColor: 'rgba(40, 167, 69, 0.7)' },
+                { label: 'Egresos ($)', data: egresos, backgroundColor: 'rgba(220, 53, 69, 0.7)' },
+                { label: 'Balance ($)', data: balance, type: 'line', borderColor: '#007bff', backgroundColor: '#007bff', tension: 0.3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Ingresos, Egresos y Balance por Mes' } }
+        }
     });
 }
 

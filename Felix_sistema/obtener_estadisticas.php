@@ -33,10 +33,19 @@ try {
     $stmt2->execute($params);
     $totalesConcepto = $stmt2->fetchAll();
 
+    // 3. Evolución mensual (últimos 12 meses, independiente del filtro)
+    $sqlMes = "SELECT DATE_FORMAT(fecha_movimiento, '%Y-%m') AS mes, tipo, SUM(monto_total) AS total
+               FROM movimientos
+               WHERE fecha_movimiento >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+               GROUP BY mes, tipo
+               ORDER BY mes ASC";
+    $totalesMes = $pdo->query($sqlMes)->fetchAll();
+
     echo json_encode([
         "exito" => true,
         "totales_tipo" => $totalesTipo,
-        "totales_concepto" => $totalesConcepto
+        "totales_concepto" => $totalesConcepto,
+        "totales_mes" => $totalesMes
     ]);
 } catch (Exception $e) {
     echo json_encode(["exito" => false, "mensaje" => $e->getMessage()]);

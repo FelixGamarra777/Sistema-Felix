@@ -74,5 +74,17 @@
     </div>
 </div>
 
+<div id="modal-tasa" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="close-modal-tasa">&times;</span>
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem;">Fijar Tasa BCV Manual</h2>
+        <div class="form-group">
+            <label for="nueva-tasa">Tasa del día (Bs. por USD)</label>
+            <input type="number" id="nueva-tasa" step="0.0001" min="0.0001" placeholder="Ej: 36.50" style="margin-bottom: 1rem;">
+        </div>
+        <button id="btn-guardar-tasa" class="submit-btn">Guardar Tasa</button>
+    </div>
+</div>
+
 <script src="assets/js/filtro-mes.js"></script>
 <script src="assets/js/common.js"></script>

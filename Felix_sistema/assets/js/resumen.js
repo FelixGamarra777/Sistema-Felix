@@ -3,6 +3,29 @@ function initResumen() {
     const inputMesDesde = document.getElementById('mes-desde');
     const inputMesHasta = document.getElementById('mes-hasta');
 
+    let ultimoIngresos = 0, ultimoEgresos = 0;
+
+    function pintarTotales() {
+        const tasa = window.TASA_BCV.tasa || 0;
+        document.getElementById('total-ingresos').textContent = formatearUSD(ultimoIngresos);
+        document.getElementById('total-egresos').textContent = formatearUSD(ultimoEgresos);
+        document.getElementById('balance-neto').textContent = formatearUSD(ultimoIngresos - ultimoEgresos);
+        document.getElementById('total-ingresos-bs').textContent = tasa > 0 ? formatearBs(ultimoIngresos * tasa) : '—';
+        document.getElementById('total-egresos-bs').textContent = tasa > 0 ? formatearBs(ultimoEgresos * tasa) : '—';
+        document.getElementById('balance-neto-bs').textContent = tasa > 0 ? formatearBs((ultimoIngresos - ultimoEgresos) * tasa) : '—';
+
+        const tasaEl = document.getElementById('tasa-dia');
+        const tasaDetalle = document.getElementById('tasa-dia-detalle');
+        if (tasaEl) {
+            tasaEl.textContent = tasa > 0 ? formatearBs(tasa) : 'Sin tasa';
+            tasaDetalle.textContent = tasa > 0
+                ? `${window.TASA_BCV.fecha} · origen: ${window.TASA_BCV.origen}`
+                : 'Fíjala con ✏️ en la barra superior';
+        }
+    }
+
+    document.addEventListener('tasa-bcv-lista', pintarTotales);
+
     async function cargarResumen(desde = '', hasta = '') {
         try {
             const url = construirUrlMovimientos(desde, hasta);
@@ -14,7 +37,7 @@ function initResumen() {
                 let tIngresos = 0, tEgresos = 0;
 
                 if (resultado.datos.length === 0) {
-                    cuerpoTabla.innerHTML = '<tr><td colspan="11" style="text-align:center;">No hay registros para este periodo.</td></tr>';
+                    cuerpoTabla.innerHTML = '<tr><td colspan="12" style="text-align:center;">No hay registros para este periodo.</td></tr>';
                 } else {
                     resultado.datos.forEach(m => {
                         const monto = parseFloat(m.monto);
@@ -24,13 +47,13 @@ function initResumen() {
                     });
                 }
 
-                document.getElementById('total-ingresos').textContent = formatearUSD(tIngresos);
-                document.getElementById('total-egresos').textContent = formatearUSD(tEgresos);
-                document.getElementById('balance-neto').textContent = formatearUSD(tIngresos - tEgresos);
+                ultimoIngresos = tIngresos;
+                ultimoEgresos = tEgresos;
+                pintarTotales();
             }
         } catch (error) {
             console.error(error);
-            cuerpoTabla.innerHTML = '<tr><td colspan="11" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="12" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
         }
     }
 

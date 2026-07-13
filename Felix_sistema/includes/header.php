@@ -27,12 +27,19 @@ if (!isset($incluirChartJs)) $incluirChartJs = false;
 
     <nav class="main-nav">
         <a href="index.php" class="<?php echo $paginaActiva === 'resumen' ? 'active' : ''; ?>">Resumen</a>
+        <a href="facturacion.php" class="<?php echo $paginaActiva === 'facturacion' ? 'active' : ''; ?>">Facturación (POS)</a>
         <a href="registrar_ingreso.php" class="<?php echo $paginaActiva === 'registrar_ingreso' ? 'active' : ''; ?>">Registrar Ingreso</a>
         <a href="registrar_egreso.php" class="<?php echo $paginaActiva === 'registrar_egreso' ? 'active' : ''; ?>">Registrar Egreso</a>
         <a href="listar_ingresos.php" class="<?php echo $paginaActiva === 'listar_ingresos' ? 'active' : ''; ?>">Ver Ingresos</a>
         <a href="listar_egresos.php" class="<?php echo $paginaActiva === 'listar_egresos' ? 'active' : ''; ?>">Ver Egresos</a>
+        <a href="productos.php" class="<?php echo $paginaActiva === 'productos' ? 'active' : ''; ?>">Productos</a>
         <a href="estadisticas.php" class="<?php echo $paginaActiva === 'estadisticas' ? 'active' : ''; ?>">Estadísticas</a>
     </nav>
+
+    <div class="tasa-bcv-bar">
+        💱 Tasa BCV del día: <strong id="tasa-bcv-valor">cargando...</strong>
+        <button type="button" id="btn-editar-tasa" class="tasa-edit-btn" title="Fijar tasa manualmente">✏️</button>
+    </div>
 </header>
 
 <div class="container">

@@ -18,14 +18,31 @@ function initRegistrarMovimiento(config) {
     const inputNumeroFactura = document.getElementById('numero_factura');
     const inputFuenteReferencia = document.getElementById('fuente_referencia');
 
+    const displayTotalBs = document.getElementById('total-display-bs');
+
     function calcularTotal() {
         const cant = parseInt(inputCantidad.value) || 0;
         const prec = parseFloat(inputPrecio.value) || 0;
-        displayTotal.textContent = formatearUSD(cant * prec);
+        const total = cant * prec;
+        displayTotal.textContent = formatearUSD(total);
+        if (displayTotalBs) {
+            const tasa = window.TASA_BCV.tasa || 0;
+            displayTotalBs.textContent = tasa > 0 ? formatearBs(total * tasa) : 'Sin tasa BCV';
+        }
     }
 
     inputCantidad.addEventListener('input', calcularTotal);
     inputPrecio.addEventListener('input', calcularTotal);
+    document.addEventListener('tasa-bcv-lista', calcularTotal);
+
+    // Autocompletado: al elegir un concepto del catálogo se refleja su precio
+    selectConcepto.addEventListener('change', () => {
+        const opt = selectConcepto.selectedOptions[0];
+        if (opt && opt.dataset.precio !== undefined) {
+            inputPrecio.value = opt.dataset.precio;
+        }
+        calcularTotal();
+    });
 
     const modalConcepto = initModal('modal-concepto', 'btn-open-modal', 'close-modal', 'nuevo-concepto');
     const modalBanco = initModal('modal-banco', 'btn-open-modal-banco', 'close-modal-banco', 'nuevo-banco');
@@ -195,6 +212,7 @@ function initRegistrarMovimiento(config) {
                 form.reset();
                 inputCantidad.value = '1';
                 displayTotal.textContent = '$0.00';
+                if (displayTotalBs) displayTotalBs.textContent = 'Bs. 0,00';
                 mostrarAlerta('¡Movimiento registrado con éxito!');
             } else {
                 alert('Error: ' + resultado.mensaje);

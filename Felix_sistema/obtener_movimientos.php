@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 $desde = isset($_GET['desde']) ? $_GET['desde'] : '';
 $hasta = isset($_GET['hasta']) ? $_GET['hasta'] : '';
 $tipo  = isset($_GET['tipo']) ? trim($_GET['tipo']) : '';
+$q     = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 try {
     $sql = "SELECT 
@@ -22,7 +23,9 @@ try {
                 cl.nombre_empresa AS cliente,
                 p.nombre_empresa AS proveedor,
                 m.numero_factura,
-                m.fuente_referencia
+                m.fuente_referencia,
+                m.tasa_bcv,
+                m.monto_bs
             FROM movimientos m
             LEFT JOIN conceptos c   ON m.id_concepto  = c.id_concepto
             LEFT JOIN bancos b      ON m.id_banco      = b.id_banco
@@ -41,6 +44,13 @@ try {
     if (!empty($tipo) && in_array($tipo, ['ingreso', 'egreso'])) {
         $conditions[] = "m.tipo = ?";
         $params[] = $tipo;
+    }
+
+    if ($q !== '') {
+        $conditions[] = "(c.nombre LIKE ? OR m.fuente LIKE ? OR cl.nombre_empresa LIKE ?
+                          OR p.nombre_empresa LIKE ? OR m.numero_factura LIKE ? OR m.fuente_referencia LIKE ?)";
+        $like = "%$q%";
+        array_push($params, $like, $like, $like, $like, $like, $like);
     }
 
     if (!empty($conditions)) {

@@ -2,6 +2,80 @@ function formatearUSD(valor) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(valor);
 }
 
+function formatearBs(valor) {
+    return "Bs. " + new Intl.NumberFormat("es-VE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(valor);
+}
+
+// --- Estado global: tasa BCV del día (disponible en todas las páginas) ---
+window.TASA_BCV = { tasa: 0, fecha: "", origen: "" };
+
+async function cargarTasaBCV(refrescar = false) {
+    try {
+        const respuesta = await fetch("obtener_tasa_bcv.php" + (refrescar ? "?refrescar=1" : ""));
+        const resultado = await respuesta.json();
+        if (resultado.exito) {
+            window.TASA_BCV = resultado;
+            actualizarWidgetTasa();
+            document.dispatchEvent(new CustomEvent("tasa-bcv-lista", { detail: resultado }));
+        }
+    } catch (error) {
+        console.error("Error cargando tasa BCV:", error);
+    }
+    return window.TASA_BCV;
+}
+
+function actualizarWidgetTasa() {
+    const el = document.getElementById("tasa-bcv-valor");
+    if (!el) return;
+    const info = window.TASA_BCV;
+    if (info.tasa > 0) {
+        const detalle = info.origen === "manual" ? " (manual)" : (info.origen === "api" ? "" : " (última conocida)");
+        el.textContent = `${formatearBs(info.tasa)} / $${detalle}`;
+    } else {
+        el.textContent = "No disponible — fíjala con ✏️";
+    }
+}
+
+function initTasaBCV() {
+    const modalTasa = initModal("modal-tasa", "btn-editar-tasa", "close-modal-tasa", "nueva-tasa");
+    const btnGuardar = document.getElementById("btn-guardar-tasa");
+    if (btnGuardar) {
+        btnGuardar.onclick = async () => {
+            const input = document.getElementById("nueva-tasa");
+            const tasa = parseFloat(input.value);
+            if (!tasa || tasa <= 0) { alert("Ingrese una tasa válida mayor a 0."); return; }
+            try {
+                btnGuardar.disabled = true;
+                const respuesta = await fetch("guardar_tasa_bcv.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tasa })
+                });
+                const resultado = await respuesta.json();
+                if (resultado.exito) {
+                    input.value = "";
+                    modalTasa.close();
+                    await cargarTasaBCV();
+                } else {
+                    alert(resultado.mensaje);
+                }
+            } finally {
+                btnGuardar.disabled = false;
+            }
+        };
+    }
+    cargarTasaBCV();
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTasaBCV);
+} else {
+    initTasaBCV();
+}
+
 function mostrarAlerta(mensaje, duracion = 3000) {
     const alertBox = document.getElementById("alert-message");
     if (!alertBox) return;
@@ -22,6 +96,9 @@ async function cargarConceptos(selectElement) {
                 const opt = document.createElement("option");
                 opt.value = c.id_concepto;
                 opt.textContent = c.nombre;
+                if (c.precio_unitario !== null) opt.dataset.precio = c.precio_unitario;
+                opt.dataset.categoria = c.categoria;
+                if (c.stock !== null) opt.dataset.stock = c.stock;
                 selectElement.appendChild(opt);
             });
         }
@@ -160,6 +237,10 @@ function renderizarFilaMovimiento(m, mostrarTipo = true) {
         ? `<td><span class="badge-${m.tipo}">${m.tipo.toUpperCase()}</span></td>`
         : '';
 
+    const montoBs = m.monto_bs !== null && m.monto_bs !== undefined
+        ? formatearBs(parseFloat(m.monto_bs))
+        : '-';
+
     return `
         <tr>
             <td>${f}</td>
@@ -168,6 +249,7 @@ function renderizarFilaMovimiento(m, mostrarTipo = true) {
             <td>${m.cantidad}</td>
             <td>${formatearUSD(precio)}</td>
             <td style="font-weight:bold;">${formatearUSD(monto)}</td>
+            <td>${montoBs}</td>
             <td>${m.fuente}</td>
             <td>${m.forma_pago || '-'}</td>
             <td>${clienteOProveedor}</td>

@@ -9,14 +9,22 @@ require_once 'includes/header.php';
     <div class="summary-card ingresos">
         <h3>Total Ingresos (Filtrado)</h3>
         <span class="value" id="total-ingresos">$0.00</span>
+        <div style="color:#6c757d; font-size:0.95rem;" id="total-ingresos-bs">Bs. 0,00</div>
     </div>
     <div class="summary-card egresos">
         <h3>Total Egresos (Filtrado)</h3>
         <span class="value" id="total-egresos">$0.00</span>
+        <div style="color:#6c757d; font-size:0.95rem;" id="total-egresos-bs">Bs. 0,00</div>
     </div>
     <div class="summary-card balance">
         <h3>Balance Neto</h3>
         <span class="value" id="balance-neto">$0.00</span>
+        <div style="color:#6c757d; font-size:0.95rem;" id="balance-neto-bs">Bs. 0,00</div>
+    </div>
+    <div class="summary-card" style="border-color: #ffc107;">
+        <h3>Tasa BCV del Día</h3>
+        <span class="value" style="color: #b8860b; font-size:1.5rem;" id="tasa-dia">—</span>
+        <div style="color:#6c757d; font-size:0.85rem;" id="tasa-dia-detalle"></div>
     </div>
 </div>
 
@@ -46,6 +54,7 @@ require_once 'includes/header.php';
                     <th>Cant.</th>
                     <th>Precio Unit.</th>
                     <th>Monto Total</th>
+                    <th>Monto Bs.</th>
                     <th>Fuente</th>
                     <th>Forma Pago</th>
                     <th>Cliente/Proveedor</th>
@@ -54,7 +63,7 @@ require_once 'includes/header.php';
                 </tr>
             </thead>
             <tbody id="cuerpo-tabla">
-                <tr><td colspan="11" style="text-align:center;">Cargando movimientos...</td></tr>
+                <tr><td colspan="12" style="text-align:center;">Cargando movimientos...</td></tr>
             </tbody>
         </table>
     </div>

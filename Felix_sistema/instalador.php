@@ -75,6 +75,59 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
     ");
 
+    // ---- 2c. Tablas del módulo de tasa BCV y facturación (POS) ----
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `tasas_bcv` (
+            `fecha`          DATE NOT NULL,
+            `tasa`           DECIMAL(14,4) NOT NULL,
+            `origen`         ENUM('api','manual') NOT NULL DEFAULT 'api',
+            `actualizado_en` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`fecha`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `facturas` (
+            `id_factura`     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `numero_factura` VARCHAR(50) NOT NULL,
+            `fecha_factura`  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            `id_cliente`     BIGINT UNSIGNED NULL,
+            `total_usd`      DECIMAL(14,2) NOT NULL DEFAULT 0,
+            `total_bs`       DECIMAL(18,2) NOT NULL DEFAULT 0,
+            `tasa_bcv`       DECIMAL(14,4) NOT NULL DEFAULT 0,
+            `usuario`        VARCHAR(50) NULL,
+            PRIMARY KEY (`id_factura`),
+            UNIQUE KEY `idx_numero_factura` (`numero_factura`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `factura_items` (
+            `id_item`         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_factura`      BIGINT UNSIGNED NOT NULL,
+            `id_concepto`     BIGINT UNSIGNED NOT NULL,
+            `descripcion`     VARCHAR(150) NOT NULL,
+            `cantidad`        INT NOT NULL,
+            `precio_unitario` DECIMAL(12,2) NOT NULL,
+            `monto_total`     DECIMAL(14,2) NOT NULL,
+            PRIMARY KEY (`id_item`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `factura_pagos` (
+            `id_pago`    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `id_factura` BIGINT UNSIGNED NOT NULL,
+            `forma_pago` VARCHAR(30) NOT NULL,
+            `moneda`     ENUM('USD','BS') NOT NULL DEFAULT 'USD',
+            `monto`      DECIMAL(18,2) NOT NULL,
+            `monto_usd`  DECIMAL(14,2) NOT NULL,
+            `id_banco`   BIGINT UNSIGNED NULL,
+            `referencia` VARCHAR(150) NULL,
+            PRIMARY KEY (`id_pago`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+
     // ---- 3. Verificar columnas obligatorias y agregarlas si faltan ----
     // Esto es lo que soluciona tu error actual: si `movimientos` ya existe
     // pero le falta `id_concepto` (o cualquier otra columna), se agrega sola.
@@ -92,11 +145,17 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             'id_proveedor'       => "BIGINT UNSIGNED NULL AFTER id_cliente",
             'numero_factura'     => "VARCHAR(50) NULL AFTER id_proveedor",
             'fuente_referencia'  => "VARCHAR(150) NULL AFTER numero_factura",
+            'tasa_bcv'           => "DECIMAL(14,4) NULL AFTER fuente_referencia",
+            'monto_bs'           => "DECIMAL(18,2) NULL AFTER tasa_bcv",
+            'id_factura'         => "BIGINT UNSIGNED NULL AFTER monto_bs",
         ],
         'conceptos' => [
-            'nombre'         => "VARCHAR(100) NOT NULL",
-            'tipo_concepto'  => "ENUM('ingreso','egreso') NULL AFTER nombre",
-            'fecha_creacion' => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
+            'nombre'          => "VARCHAR(100) NOT NULL",
+            'tipo_concepto'   => "ENUM('ingreso','egreso') NULL AFTER nombre",
+            'categoria'       => "ENUM('producto','servicio') NOT NULL DEFAULT 'servicio' AFTER tipo_concepto",
+            'precio_unitario' => "DECIMAL(12,2) NULL AFTER categoria",
+            'stock'           => "INT NULL AFTER precio_unitario",
+            'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
         ],
     ];
 
@@ -129,24 +188,42 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
     // ---- 5. Crear las relaciones (llaves foráneas) si aún no existen ----
     // Ahora que no hay huérfanos, esto normalmente ya puede crearse sin error.
     $relaciones = [
-        'fk_movimientos_conceptos' => "ADD CONSTRAINT `fk_movimientos_conceptos`
+        ['movimientos', 'fk_movimientos_conceptos', "ADD CONSTRAINT `fk_movimientos_conceptos`
             FOREIGN KEY (`id_concepto`) REFERENCES `conceptos`(`id_concepto`)
-            ON DELETE RESTRICT ON UPDATE CASCADE",
-        'fk_mov_banco' => "ADD CONSTRAINT `fk_mov_banco`
+            ON DELETE RESTRICT ON UPDATE CASCADE"],
+        ['movimientos', 'fk_mov_banco', "ADD CONSTRAINT `fk_mov_banco`
             FOREIGN KEY (`id_banco`) REFERENCES `bancos`(`id_banco`)
-            ON DELETE SET NULL ON UPDATE CASCADE",
-        'fk_mov_cliente' => "ADD CONSTRAINT `fk_mov_cliente`
+            ON DELETE SET NULL ON UPDATE CASCADE"],
+        ['movimientos', 'fk_mov_cliente', "ADD CONSTRAINT `fk_mov_cliente`
             FOREIGN KEY (`id_cliente`) REFERENCES `clientes`(`id_cliente`)
-            ON DELETE SET NULL ON UPDATE CASCADE",
-        'fk_mov_proveedor' => "ADD CONSTRAINT `fk_mov_proveedor`
+            ON DELETE SET NULL ON UPDATE CASCADE"],
+        ['movimientos', 'fk_mov_proveedor', "ADD CONSTRAINT `fk_mov_proveedor`
             FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores`(`id_proveedor`)
-            ON DELETE SET NULL ON UPDATE CASCADE",
+            ON DELETE SET NULL ON UPDATE CASCADE"],
+        ['movimientos', 'fk_mov_factura', "ADD CONSTRAINT `fk_mov_factura`
+            FOREIGN KEY (`id_factura`) REFERENCES `facturas`(`id_factura`)
+            ON DELETE SET NULL ON UPDATE CASCADE"],
+        ['facturas', 'fk_fact_cliente', "ADD CONSTRAINT `fk_fact_cliente`
+            FOREIGN KEY (`id_cliente`) REFERENCES `clientes`(`id_cliente`)
+            ON DELETE SET NULL ON UPDATE CASCADE"],
+        ['factura_items', 'fk_item_factura', "ADD CONSTRAINT `fk_item_factura`
+            FOREIGN KEY (`id_factura`) REFERENCES `facturas`(`id_factura`)
+            ON DELETE CASCADE ON UPDATE CASCADE"],
+        ['factura_items', 'fk_item_concepto', "ADD CONSTRAINT `fk_item_concepto`
+            FOREIGN KEY (`id_concepto`) REFERENCES `conceptos`(`id_concepto`)
+            ON DELETE RESTRICT ON UPDATE CASCADE"],
+        ['factura_pagos', 'fk_pago_factura', "ADD CONSTRAINT `fk_pago_factura`
+            FOREIGN KEY (`id_factura`) REFERENCES `facturas`(`id_factura`)
+            ON DELETE CASCADE ON UPDATE CASCADE"],
+        ['factura_pagos', 'fk_pago_banco', "ADD CONSTRAINT `fk_pago_banco`
+            FOREIGN KEY (`id_banco`) REFERENCES `bancos`(`id_banco`)
+            ON DELETE SET NULL ON UPDATE CASCADE"],
     ];
 
-    foreach ($relaciones as $nombreFk => $ddl) {
-        if (!existeLlaveForanea($pdo, 'movimientos', $nombreFk)) {
+    foreach ($relaciones as [$tabla, $nombreFk, $ddl]) {
+        if (!existeLlaveForanea($pdo, $tabla, $nombreFk)) {
             try {
-                $pdo->exec("ALTER TABLE `movimientos` $ddl");
+                $pdo->exec("ALTER TABLE `$tabla` $ddl");
             } catch (\Exception $e) {
                 // Si por algún motivo no se puede crear todavía, no se detiene
                 // el sistema: seguirá funcionando y se reintentará luego.

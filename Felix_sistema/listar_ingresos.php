@@ -5,22 +5,32 @@ $tituloPagina = 'Listado de Ingresos';
 require_once 'includes/header.php';
 ?>
 
-<section class="card-panel filter-section">
-    <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
-        <label for="mes-desde">Mes desde:</label>
-        <input type="month" id="mes-desde">
+<section class="card-panel">
+    <div class="filtros-rapidos" style="margin-bottom: 1rem;">
+        <button class="chip-filtro" data-rango="dia">Hoy</button>
+        <button class="chip-filtro" data-rango="semana">Esta Semana</button>
+        <button class="chip-filtro" data-rango="mes">Este Mes</button>
+        <button class="chip-filtro" data-rango="anio">Este Año</button>
+        <button class="chip-filtro" data-rango="todo">Ver Todo</button>
     </div>
-    <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
-        <label for="mes-hasta">Mes hasta:</label>
-        <input type="month" id="mes-hasta">
+    <div class="filter-section" style="justify-content: flex-start;">
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
+            <label for="fecha-desde">Desde:</label>
+            <input type="date" id="fecha-desde">
+        </div>
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem;">
+            <label for="fecha-hasta">Hasta:</label>
+            <input type="date" id="fecha-hasta">
+        </div>
+        <button id="btn-filtrar" class="submit-btn btn-success" style="width: auto; padding: 0.6rem 1.5rem;">Filtrar</button>
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem; flex:1; min-width: 220px;">
+            <input type="text" id="buscar-texto" placeholder="🔎 Buscar por concepto, cliente, factura..." style="width:100%;">
+        </div>
     </div>
-    <button id="btn-filtrar" class="submit-btn btn-success" style="width: auto; padding: 0.6rem 1.5rem;">Filtrar</button>
-    <button id="btn-mes-actual" class="submit-btn btn-info" style="width: auto; padding: 0.6rem 1.5rem;">Mes Actual</button>
-    <button id="btn-limpiar" class="submit-btn btn-secondary" style="width: auto; padding: 0.6rem 1.5rem;">Ver Todo</button>
 </section>
 
 <section class="card-panel">
-    <h2>Todos los Ingresos</h2>
+    <h2>Todos los Ingresos &nbsp;<small style="font-weight:normal; color:#6c757d;">Total del listado: <strong id="total-listado" style="color: var(--success);">$0.00</strong></small></h2>
     <div class="table-responsive">
         <table>
             <thead>
@@ -30,15 +40,16 @@ require_once 'includes/header.php';
                     <th>Cant.</th>
                     <th>Precio Unit.</th>
                     <th>Monto Total</th>
+                    <th>Monto Bs.</th>
                     <th>Fuente</th>
                     <th>Forma Pago</th>
-                    <th>Cliente</th>
+                    <th>Cliente/Proveedor</th>
                     <th>N&deg; Factura</th>
                     <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="cuerpo-tabla">
-                <tr><td colspan="10" style="text-align:center;">Cargando ingresos...</td></tr>
+                <tr><td colspan="11" style="text-align:center;">Cargando ingresos...</td></tr>
             </tbody>
         </table>
     </div>

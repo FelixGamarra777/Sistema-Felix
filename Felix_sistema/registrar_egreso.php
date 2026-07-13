@@ -34,8 +34,13 @@ require_once 'includes/header.php';
             </div>
 
             <div class="form-group">
-                <label>Total Calculado</label>
+                <label>Total Calculado (USD)</label>
                 <div class="total-box" id="total-display">$0.00</div>
+            </div>
+
+            <div class="form-group">
+                <label>Total en Bolívares (Bs.)</label>
+                <div class="total-box" id="total-display-bs" style="background-color: #fff3cd; border-color: #ffeeba; color: #856404;">Bs. 0,00</div>
             </div>
 
             <div class="form-group">

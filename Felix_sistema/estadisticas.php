@@ -32,6 +32,13 @@ require_once 'includes/header.php';
     </div>
 </section>
 
+<section class="card-panel">
+    <h2>Evolución Mensual (últimos 12 meses)</h2>
+    <div style="position: relative; height: 320px; width: 100%;">
+        <canvas id="graficoMensual"></canvas>
+    </div>
+</section>
+
 <?php require_once 'includes/footer.php'; ?>
 <script src="assets/js/estadisticas.js"></script>
 <script>

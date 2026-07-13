@@ -1,6 +1,7 @@
 <?php
 require_once 'conexion.php';
 require_once 'includes/verificar_sesion_api.php';
+require_once 'includes/tasa_bcv.php';
 header('Content-Type: application/json');
 
 $data = json_decode(file_get_contents('php://input'), true);
@@ -44,6 +45,12 @@ if (!empty($errores)) {
 $monto_total = $cantidad * $precio_unitario;
 
 try {
+    // Tasa BCV del día: se calcula en el servidor para que quede registrada
+    // con cada transacción (histórico confiable aunque la tasa cambie mañana).
+    $infoTasa = obtenerTasaBCV($pdo);
+    $tasa_bcv = $infoTasa['tasa'] > 0 ? $infoTasa['tasa'] : null;
+    $monto_bs = $tasa_bcv !== null ? round($monto_total * $tasa_bcv, 2) : null;
+
     // Verificar que el concepto realmente exista (evita datos huérfanos)
     $stmtCheck = $pdo->prepare("SELECT id_concepto FROM conceptos WHERE id_concepto = ?");
     $stmtCheck->execute([$id_concepto]);
@@ -54,12 +61,14 @@ try {
 
     $sql = "INSERT INTO movimientos
                 (id_concepto, tipo, cantidad, precio_unitario, monto_total, fuente,
-                 forma_pago, id_banco, id_cliente, id_proveedor, numero_factura, fuente_referencia)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                 forma_pago, id_banco, id_cliente, id_proveedor, numero_factura, fuente_referencia,
+                 tasa_bcv, monto_bs)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $id_concepto, $tipo, $cantidad, $precio_unitario, $monto_total, $fuente,
-        $forma_pago, $id_banco, $id_cliente, $id_proveedor, $numero_factura, $fuente_referencia
+        $forma_pago, $id_banco, $id_cliente, $id_proveedor, $numero_factura, $fuente_referencia,
+        $tasa_bcv, $monto_bs
     ]);
 
     echo json_encode(["exito" => true, "id_movimiento" => $pdo->lastInsertId()]);
