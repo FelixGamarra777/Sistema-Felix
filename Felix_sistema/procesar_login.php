@@ -6,18 +6,15 @@ session_start();
 include 'conexion.php'; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Limpiar variables para evitar inyecciones básicas (asumiendo que usas mysqli en conexion.php)
-    // Nota: Lo ideal en entornos profesionales es usar Prepared Statements (Sentencias preparadas)
-    $usuario = mysqli_real_escape_string($conn, $_POST['usuario']);
-    $password = $_POST['password'];
+    $usuario = trim($_POST['usuario'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    // Buscar al usuario
-    $sql = "SELECT * FROM usuarios WHERE usuario = '$usuario'";
-    $resultado = mysqli_query($conn, $sql);
+    // Buscar al usuario con prepared statement (previene inyección SQL)
+    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE usuario = ?");
+    $stmt->execute([$usuario]);
+    $row = $stmt->fetch();
 
-    if ($resultado && mysqli_num_rows($resultado) > 0) {
-        $row = mysqli_fetch_assoc($resultado);
-        
+    if ($row) {
         // Verificar contraseña con el hash de la Base de Datos
         if (password_verify($password, $row['password'])) {
             // Logueado con éxito: Guardamos datos en la sesión
