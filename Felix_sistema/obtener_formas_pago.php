@@ -9,7 +9,7 @@ try {
 
     $valores = [];
     if ($columna && preg_match("/^enum\((.*)\)$/i", $columna['Type'], $coincidencias)) {
-        $valores = str_getcsv($coincidencias[1], ',', "'");
+        $valores = str_getcsv($coincidencias[1], ',', "'", '\\');
     }
 
     echo json_encode(["exito" => true, "datos" => $valores]);

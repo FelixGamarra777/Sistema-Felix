@@ -12,6 +12,8 @@ if (!isset($data['nombre']) || empty(trim($data['nombre']))) {
 
 $nombre    = trim($data['nombre']);
 $categoria = (isset($data['categoria']) && $data['categoria'] === 'producto') ? 'producto' : 'servicio';
+$grupo     = (isset($data['grupo']) && trim($data['grupo']) !== '')
+                ? mb_substr(trim($data['grupo']), 0, 50) : null;
 $precio    = (isset($data['precio_unitario']) && $data['precio_unitario'] !== '' && $data['precio_unitario'] !== null)
                 ? floatval($data['precio_unitario']) : null;
 $stock     = ($categoria === 'producto')
@@ -32,8 +34,8 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO conceptos (nombre, categoria, precio_unitario, stock) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$nombre, $categoria, $precio, $stock]);
+    $stmt = $pdo->prepare("INSERT INTO conceptos (nombre, categoria, grupo, precio_unitario, stock) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock]);
 
     echo json_encode(["exito" => true, "id_concepto" => $pdo->lastInsertId()]);
 } catch (Exception $e) {

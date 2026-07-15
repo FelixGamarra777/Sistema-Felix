@@ -153,6 +153,7 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             'nombre'          => "VARCHAR(100) NOT NULL",
             'tipo_concepto'   => "ENUM('ingreso','egreso') NULL AFTER nombre",
             'categoria'       => "ENUM('producto','servicio') NOT NULL DEFAULT 'servicio' AFTER tipo_concepto",
+            'grupo'           => "VARCHAR(50) NULL AFTER categoria",
             'precio_unitario' => "DECIMAL(12,2) NULL AFTER categoria",
             'stock'           => "INT NULL AFTER precio_unitario",
             'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",

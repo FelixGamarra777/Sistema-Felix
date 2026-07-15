@@ -104,6 +104,45 @@ footer { background-color: var(--dark); color: white; text-align: center; paddin
 .badge-producto { color: #004085; background: #cce5ff; font-weight: bold; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; }
 .badge-servicio { color: #383d41; background: #e2e3e5; font-weight: bold; padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; }
 
+/* --- POS: panel táctil de venta --- */
+.pos-panel-layout { display: grid; grid-template-columns: 1fr 240px; gap: 1.5rem; align-items: start; }
+.pos-catalogo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem; max-height: 400px; overflow-y: auto; padding: 2px; }
+.pos-tile { border: 1px solid var(--border); background: var(--light); border-radius: 10px; padding: 0.7rem 0.5rem; cursor: pointer; text-align: center; min-height: 92px; display: flex; flex-direction: column; justify-content: center; gap: 3px; transition: 0.15s; font-family: inherit; }
+.pos-tile:hover { border-color: var(--primary); background: #e8f4fd; }
+.pos-tile:active { transform: scale(0.96); }
+.pos-tile .tile-nombre { font-weight: 600; font-size: 0.9rem; line-height: 1.25; white-space: normal; }
+.pos-tile .tile-precio { color: var(--primary); font-weight: bold; font-size: 1.05rem; }
+.pos-tile .tile-stock { font-size: 0.75rem; color: #6c757d; }
+
+/* --- POS: teclado numérico en pantalla --- */
+.pos-numpad-col label { display: block; }
+.numpad-display { font-size: 1.4rem; font-weight: bold; text-align: center; }
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.6rem; }
+.numpad button { padding: 0.85rem 0; font-size: 1.25rem; font-weight: 700; border: 1px solid var(--border); border-radius: 8px; background: white; cursor: pointer; transition: 0.1s; font-family: inherit; }
+.numpad button:hover { background: #e8f4fd; border-color: var(--primary); }
+.numpad button:active { transform: scale(0.94); }
+.numpad .np-accion { background: var(--light); }
+.numpad .np-ok { grid-column: span 3; background: var(--success); color: white; border: none; font-size: 1.05rem; }
+.numpad .np-ok:hover { background: #218838; }
+.numpad-destino { font-size: 0.85rem; color: #6c757d; margin-top: 0.5rem; text-align: center; }
+input.numpad-activo { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); }
+
+/* --- POS: billetes rápidos y vuelto --- */
+.fastcash-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.fastcash { border: 2px solid var(--success); background: white; color: var(--success); font-weight: 700; padding: 0.7rem 1.2rem; border-radius: 10px; cursor: pointer; font-size: 1.1rem; transition: 0.15s; font-family: inherit; }
+.fastcash:hover { background: var(--success); color: white; }
+.fastcash:active { transform: scale(0.95); }
+.fastcash.exacto { border-color: var(--primary); color: var(--primary); }
+.fastcash.exacto:hover { background: var(--primary); color: white; }
+.vuelto-box { padding: 0.9rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; margin-bottom: 1rem; text-align: center; }
+.vuelto-box.ok { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.vuelto-box.falta { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+@media (max-width: 768px) {
+    .pos-panel-layout { grid-template-columns: 1fr; }
+    .pos-catalogo-grid { max-height: 300px; }
+}
+
 /* --- Filtros rápidos --- */
 .filtros-rapidos { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .chip-filtro { border: 1px solid var(--primary); background: white; color: var(--primary); padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; font-weight: 600; transition: 0.2s; }

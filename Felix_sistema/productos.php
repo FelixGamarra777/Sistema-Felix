@@ -29,6 +29,7 @@ require_once 'includes/header.php';
                 <tr>
                     <th>Nombre</th>
                     <th>Tipo</th>
+                    <th>Categoría POS</th>
                     <th>Precio (USD)</th>
                     <th>Precio (Bs.)</th>
                     <th>Stock</th>
@@ -36,7 +37,7 @@ require_once 'includes/header.php';
                 </tr>
             </thead>
             <tbody id="cuerpo-tabla">
-                <tr><td colspan="6" style="text-align:center;">Cargando catálogo...</td></tr>
+                <tr><td colspan="7" style="text-align:center;">Cargando catálogo...</td></tr>
             </tbody>
         </table>
     </div>
@@ -59,6 +60,11 @@ require_once 'includes/header.php';
                 <option value="producto">Producto (con inventario)</option>
                 <option value="servicio">Servicio (sin inventario)</option>
             </select>
+        </div>
+        <div class="form-group">
+            <label for="prod-grupo">Categoría del panel POS (ej: Cuadernos, Fotocopias)</label>
+            <input type="text" id="prod-grupo" list="lista-grupos" placeholder="Opcional — agrupa el botón en Facturación" style="margin-bottom: 1rem;">
+            <datalist id="lista-grupos"></datalist>
         </div>
         <div class="form-group">
             <label for="prod-precio">Precio de venta (USD)</label>

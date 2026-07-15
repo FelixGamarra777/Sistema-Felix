@@ -26,17 +26,39 @@ require_once 'includes/header.php';
 </section>
 
 <section class="card-panel">
-    <h2>Agregar Productos / Servicios</h2>
-    <div class="pos-grid">
-        <div class="form-group buscador-wrapper" style="grid-column: span 2;">
-            <label for="buscador-pos">Buscar en el catálogo</label>
-            <input type="text" id="buscador-pos" placeholder="Escriba para buscar... (ej: resma, impresión)" autocomplete="off" />
-            <div id="sugerencias-pos" class="sugerencias"></div>
+    <h2>Panel de Venta</h2>
+    <div id="pos-chips" class="filtros-rapidos" style="margin-bottom: 1rem;"></div>
+    <div class="pos-panel-layout">
+        <div id="pos-catalogo" class="pos-catalogo-grid">
+            <p style="padding: 1rem; color: #6c757d;">Cargando catálogo...</p>
         </div>
-        <div class="form-group">
-            <label for="cantidad-pos">Cantidad</label>
-            <input type="number" id="cantidad-pos" min="1" value="1" />
-        </div>
+        <aside class="pos-numpad-col">
+            <label for="cantidad-pos">Cantidad a agregar</label>
+            <input type="number" id="cantidad-pos" min="1" value="1" class="numpad-display" />
+            <div class="numpad" id="numpad">
+                <button type="button" data-np="7">7</button>
+                <button type="button" data-np="8">8</button>
+                <button type="button" data-np="9">9</button>
+                <button type="button" data-np="4">4</button>
+                <button type="button" data-np="5">5</button>
+                <button type="button" data-np="6">6</button>
+                <button type="button" data-np="1">1</button>
+                <button type="button" data-np="2">2</button>
+                <button type="button" data-np="3">3</button>
+                <button type="button" data-np="." class="np-accion">.</button>
+                <button type="button" data-np="0">0</button>
+                <button type="button" data-np="borrar" class="np-accion">⌫</button>
+                <button type="button" data-np="limpiar" class="np-accion" style="grid-column: span 3;">C — Limpiar</button>
+                <button type="button" data-np="listo" class="np-ok">✔ Listo</button>
+            </div>
+            <div class="numpad-destino" id="numpad-destino">Escribiendo en: <strong>Cantidad</strong></div>
+        </aside>
+    </div>
+
+    <div class="form-group buscador-wrapper" style="margin-top: 1.5rem;">
+        <label for="buscador-pos">¿No encuentra el botón? Busque en el catálogo</label>
+        <input type="text" id="buscador-pos" placeholder="Escriba para buscar... (ej: resma, impresión)" autocomplete="off" />
+        <div id="sugerencias-pos" class="sugerencias"></div>
     </div>
 
     <div class="table-responsive" style="margin-top: 1rem;">
@@ -65,6 +87,17 @@ require_once 'includes/header.php';
 
 <section class="card-panel">
     <h2>Pagos (puede combinar varios métodos)</h2>
+    <div class="fastcash-row">
+        <button type="button" class="fastcash exacto" data-exacto="USD">🎯 Monto Exacto $</button>
+        <button type="button" class="fastcash exacto" data-exacto="BS">🎯 Monto Exacto Bs.</button>
+        <button type="button" class="fastcash" data-billete="1">$1</button>
+        <button type="button" class="fastcash" data-billete="5">$5</button>
+        <button type="button" class="fastcash" data-billete="10">$10</button>
+        <button type="button" class="fastcash" data-billete="20">$20</button>
+        <button type="button" class="fastcash" data-billete="50">$50</button>
+        <button type="button" class="fastcash" data-billete="100">$100</button>
+    </div>
+    <div id="vuelto-box" class="vuelto-box" style="display:none;"></div>
     <div id="lineas-pago"></div>
     <button type="button" id="btn-agregar-pago" class="submit-btn btn-info" style="width:auto; padding: 0.5rem 1.2rem;">+ Agregar Pago</button>
     <div class="pos-totales" style="margin-top: 1rem;">

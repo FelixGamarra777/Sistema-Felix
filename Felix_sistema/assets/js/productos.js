@@ -8,6 +8,8 @@ function initProductos() {
     const inputId = document.getElementById('prod-id');
     const inputNombre = document.getElementById('prod-nombre');
     const selectCategoria = document.getElementById('prod-categoria');
+    const inputGrupo = document.getElementById('prod-grupo');
+    const listaGrupos = document.getElementById('lista-grupos');
     const inputPrecio = document.getElementById('prod-precio');
     const inputStock = document.getElementById('prod-stock');
     const grupoStock = document.getElementById('grupo-stock');
@@ -24,6 +26,7 @@ function initProductos() {
         inputId.value = '';
         inputNombre.value = '';
         selectCategoria.value = 'producto';
+        inputGrupo.value = '';
         inputPrecio.value = '';
         inputStock.value = '0';
         grupoStock.style.display = '';
@@ -35,12 +38,18 @@ function initProductos() {
             const resultado = await respuesta.json();
             if (resultado.exito) {
                 catalogo = resultado.datos;
+                renderizarGrupos();
                 renderizar();
             }
         } catch (error) {
             console.error(error);
-            cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
         }
+    }
+
+    function renderizarGrupos() {
+        const grupos = [...new Set(catalogo.map(p => p.grupo).filter(g => g))].sort();
+        listaGrupos.innerHTML = grupos.map(g => `<option value="${g}">`).join('');
     }
 
     function renderizar() {
@@ -54,7 +63,7 @@ function initProductos() {
         );
 
         if (filtrados.length === 0) {
-            cuerpoTabla.innerHTML = '<tr><td colspan="6" style="text-align:center;">No hay productos/servicios que coincidan.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="7" style="text-align:center;">No hay productos/servicios que coincidan.</td></tr>';
             return;
         }
 
@@ -72,6 +81,7 @@ function initProductos() {
                 <tr>
                     <td>${p.nombre}</td>
                     <td><span class="badge-${p.categoria}">${esProducto ? 'PRODUCTO' : 'SERVICIO'}</span></td>
+                    <td>${p.grupo || '—'}</td>
                     <td>${precioUsd}</td>
                     <td>${precioBs}</td>
                     <td>${stock}</td>
@@ -90,6 +100,7 @@ function initProductos() {
         inputId.value = p.id_concepto;
         inputNombre.value = p.nombre;
         selectCategoria.value = p.categoria;
+        inputGrupo.value = p.grupo || '';
         inputPrecio.value = p.precio_unitario !== null ? p.precio_unitario : '';
         inputStock.value = p.stock !== null ? p.stock : '0';
         grupoStock.style.display = p.categoria === 'producto' ? '' : 'none';
@@ -124,6 +135,7 @@ function initProductos() {
         const datos = {
             nombre,
             categoria: selectCategoria.value,
+            grupo: inputGrupo.value.trim() || null,
             precio_unitario: inputPrecio.value !== '' ? Number(inputPrecio.value) : null,
             stock: inputStock.value !== '' ? Number(inputStock.value) : 0
         };
