@@ -98,11 +98,13 @@ entiendes el 80% de la arquitectura.
   concepto que ya tenga movimientos o facturas (lo protege una llave foránea
   RESTRICT, y el sistema muestra un mensaje amigable).
 
-### 4.5 Transacciones simples (Registrar Ingreso / Egreso)
-- **Archivos:** `registrar_ingreso.php`, `registrar_egreso.php`, `assets/js/registrar-movimiento.js`, `insertar_movimiento.php`
-- Ambas páginas comparten el MISMO JavaScript, configurado con parámetros:
-  `initRegistrarMovimiento({ tipo: 'ingreso', mostrarCliente: true })`.
-  Esto evita duplicar código (principio DRY: *Don't Repeat Yourself*).
+### 4.5 Registrar Egreso (compras y gastos)
+- **Archivos:** `registrar_egreso.php`, `assets/js/registrar-egreso.js`, `insertar_movimiento.php`
+- **Nota de arquitectura:** antes existía un módulo gemelo "Registrar Ingreso".
+  Se **eliminó** porque duplicaba la función del POS: hoy **todo ingreso entra
+  únicamente por Facturación** (un solo punto de escritura contable y de
+  inventario). `insertar_movimiento.php` **rechaza** cualquier intento de
+  registrar un ingreso y solo acepta egresos.
 - Al seleccionar un concepto se **autocompleta su precio** de catálogo
   (el dato viaja en el atributo `data-precio` de cada opción del select).
 - El total se calcula reactivamente en USD **y en bolívares** al escribir.
@@ -111,9 +113,13 @@ entiendes el 80% de la arquitectura.
 
 ### 4.6 Módulo POS (Facturación múltiple) ⭐⭐ (el corazón del proyecto)
 - **Archivos:** `facturacion.php`, `assets/js/facturacion.js`, `guardar_factura.php`, `obtener_correlativo.php`
-- **Cabecera:** cliente (o "Consumidor final") y correlativo de factura que se
-  genera automático (`00001, 00002...`) pero se puede escribir a mano; el
-  sistema rechaza números repetidos.
+- Es el **único punto de entrada de ingresos** del sistema (ver 4.5): toda
+  venta, simple o múltiple, se registra aquí como una factura.
+- **Cabecera consolidada:** cliente (o "Consumidor final", opcional),
+  **referencia** libre (opcional, ej: número de transferencia) y correlativo
+  de factura que se genera automático (`00001, 00002...`) — al agregar el
+  **primer ítem** al carrito el número se refresca desde el servidor, salvo
+  que el usuario haya escrito uno a mano; el sistema rechaza números repetidos.
 - **Buscador predictivo:** el catálogo se carga una vez y se filtra en memoria
   mientras se escribe, mostrando precio y stock de cada coincidencia.
 - **Carrito reactivo:** cantidades y precios editables en línea; subtotales
@@ -166,9 +172,8 @@ entiendes el 80% de la arquitectura.
 ```
 Felix_sistema/
 ├── index.php                  ← Resumen (página principal)
-├── facturacion.php            ← POS / Facturación múltiple
-├── registrar_ingreso.php      ← Transacción simple de ingreso
-├── registrar_egreso.php       ← Transacción simple de egreso
+├── facturacion.php            ← POS / Facturación (única entrada de ingresos)
+├── registrar_egreso.php       ← Registro de egresos (compras/gastos)
 ├── listar_ingresos.php        ← Consulta con filtros
 ├── listar_egresos.php         ← Consulta con filtros
 ├── productos.php              ← CRUD del catálogo
@@ -198,7 +203,7 @@ Felix_sistema/
         ├── filtro-mes.js      ← Helpers de fechas
         ├── facturacion.js     ← Lógica del POS
         ├── productos.js       ← Lógica del catálogo
-        ├── registrar-movimiento.js
+        ├── registrar-egreso.js
         ├── listar-movimientos.js
         ├── resumen.js
         └── estadisticas.js

@@ -29,9 +29,11 @@ $numero_factura    = $numero_factura === '' ? null : $numero_factura;
 $fuente_referencia = $fuente_referencia === '' ? null : $fuente_referencia;
 
 // --- Validaciones ---
+// Los ingresos SOLO entran por Facturación (guardar_factura.php), que es el
+// único punto de escritura contable de ventas (transacción ACID completa).
 $errores = [];
 if ($id_concepto <= 0)                       $errores[] = "Debe seleccionar un concepto válido.";
-if (!in_array($tipo, ['ingreso', 'egreso'])) $errores[] = "El tipo debe ser 'ingreso' o 'egreso'.";
+if ($tipo !== 'egreso')                      $errores[] = "Este endpoint solo registra egresos. Los ingresos se registran desde Facturación (POS).";
 if ($cantidad <= 0)                          $errores[] = "La cantidad debe ser mayor a 0.";
 if ($precio_unitario <= 0)                   $errores[] = "El precio unitario debe ser mayor a 0.";
 if ($fuente === '')                          $errores[] = "La fuente/proveedor es obligatoria.";

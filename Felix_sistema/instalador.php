@@ -95,6 +95,7 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             `total_usd`      DECIMAL(14,2) NOT NULL DEFAULT 0,
             `total_bs`       DECIMAL(18,2) NOT NULL DEFAULT 0,
             `tasa_bcv`       DECIMAL(14,4) NOT NULL DEFAULT 0,
+            `referencia`     VARCHAR(150) NULL,
             `usuario`        VARCHAR(50) NULL,
             PRIMARY KEY (`id_factura`),
             UNIQUE KEY `idx_numero_factura` (`numero_factura`)
@@ -157,6 +158,9 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             'precio_unitario' => "DECIMAL(12,2) NULL AFTER categoria",
             'stock'           => "INT NULL AFTER precio_unitario",
             'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
+        ],
+        'facturas' => [
+            'referencia'      => "VARCHAR(150) NULL AFTER tasa_bcv",
         ],
     ];
 

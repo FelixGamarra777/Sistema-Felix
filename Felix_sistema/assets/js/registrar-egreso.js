@@ -1,24 +1,18 @@
-function initRegistrarMovimiento(config) {
-    const {
-        tipo,
-        formId = 'form-movimiento',
-        mostrarCliente = false,
-        mostrarProveedor = false
-    } = config;
-
-    const form = document.getElementById(formId);
+// Registro de egresos (compras, gastos, pagos a proveedores).
+// Los ingresos ya NO se registran aquí: el único punto de entrada de ventas
+// es el módulo de Facturación (POS), que escribe vía guardar_factura.php.
+function initRegistrarEgreso() {
+    const form = document.getElementById('form-movimiento');
     const selectConcepto = document.getElementById('concepto');
     const selectFormaPago = document.getElementById('forma_pago');
     const selectBanco = document.getElementById('banco');
-    const selectCliente = document.getElementById('cliente');
     const selectProveedor = document.getElementById('proveedor');
     const inputCantidad = document.getElementById('cantidad');
     const inputPrecio = document.getElementById('precio');
     const displayTotal = document.getElementById('total-display');
+    const displayTotalBs = document.getElementById('total-display-bs');
     const inputNumeroFactura = document.getElementById('numero_factura');
     const inputFuenteReferencia = document.getElementById('fuente_referencia');
-
-    const displayTotalBs = document.getElementById('total-display-bs');
 
     function calcularTotal() {
         const cant = parseInt(inputCantidad.value) || 0;
@@ -46,12 +40,7 @@ function initRegistrarMovimiento(config) {
 
     const modalConcepto = initModal('modal-concepto', 'btn-open-modal', 'close-modal', 'nuevo-concepto');
     const modalBanco = initModal('modal-banco', 'btn-open-modal-banco', 'close-modal-banco', 'nuevo-banco');
-    const modalCliente = mostrarCliente
-        ? initModal('modal-cliente', 'btn-open-modal-cliente', 'close-modal-cliente', 'nuevo-cliente-nombre')
-        : null;
-    const modalProveedor = mostrarProveedor
-        ? initModal('modal-proveedor', 'btn-open-modal-proveedor', 'close-modal-proveedor', 'nuevo-proveedor-nombre')
-        : null;
+    const modalProveedor = initModal('modal-proveedor', 'btn-open-modal-proveedor', 'close-modal-proveedor', 'nuevo-proveedor-nombre');
 
     document.getElementById('btn-guardar-concepto').onclick = async () => {
         const input = document.getElementById('nuevo-concepto');
@@ -107,73 +96,37 @@ function initRegistrarMovimiento(config) {
         }
     };
 
-    if (mostrarCliente) {
-        document.getElementById('btn-guardar-cliente').onclick = async () => {
-            const nombre = document.getElementById('nuevo-cliente-nombre').value.trim();
-            const rif = document.getElementById('nuevo-cliente-rif').value.trim();
-            if (!nombre || !rif) { alert('Nombre y Cédula/RIF son obligatorios.'); return; }
+    document.getElementById('btn-guardar-proveedor').onclick = async () => {
+        const nombre = document.getElementById('nuevo-proveedor-nombre').value.trim();
+        const rif = document.getElementById('nuevo-proveedor-rif').value.trim();
+        if (!nombre || !rif) { alert('Nombre y Cédula/RIF son obligatorios.'); return; }
 
-            const btn = document.getElementById('btn-guardar-cliente');
-            try {
-                btn.disabled = true;
-                const respuesta = await fetch('insertar_cliente.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nombre_empresa: nombre,
-                        cedula_rif: rif,
-                        tipo_persona: document.getElementById('nuevo-cliente-tipo').value
-                    })
-                });
-                const resultado = await respuesta.json();
-                if (resultado.exito) {
-                    await cargarClientes(selectCliente);
-                    selectCliente.value = resultado.id_cliente;
-                    document.getElementById('nuevo-cliente-nombre').value = '';
-                    document.getElementById('nuevo-cliente-rif').value = '';
-                    modalCliente.close();
-                } else {
-                    alert(resultado.mensaje);
-                }
-            } finally {
-                btn.disabled = false;
+        const btn = document.getElementById('btn-guardar-proveedor');
+        try {
+            btn.disabled = true;
+            const respuesta = await fetch('insertar_proveedor.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre_empresa: nombre,
+                    cedula_rif: rif,
+                    tipo_persona: document.getElementById('nuevo-proveedor-tipo').value
+                })
+            });
+            const resultado = await respuesta.json();
+            if (resultado.exito) {
+                await cargarProveedores(selectProveedor);
+                selectProveedor.value = resultado.id_proveedor;
+                document.getElementById('nuevo-proveedor-nombre').value = '';
+                document.getElementById('nuevo-proveedor-rif').value = '';
+                modalProveedor.close();
+            } else {
+                alert(resultado.mensaje);
             }
-        };
-    }
-
-    if (mostrarProveedor) {
-        document.getElementById('btn-guardar-proveedor').onclick = async () => {
-            const nombre = document.getElementById('nuevo-proveedor-nombre').value.trim();
-            const rif = document.getElementById('nuevo-proveedor-rif').value.trim();
-            if (!nombre || !rif) { alert('Nombre y Cédula/RIF son obligatorios.'); return; }
-
-            const btn = document.getElementById('btn-guardar-proveedor');
-            try {
-                btn.disabled = true;
-                const respuesta = await fetch('insertar_proveedor.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nombre_empresa: nombre,
-                        cedula_rif: rif,
-                        tipo_persona: document.getElementById('nuevo-proveedor-tipo').value
-                    })
-                });
-                const resultado = await respuesta.json();
-                if (resultado.exito) {
-                    await cargarProveedores(selectProveedor);
-                    selectProveedor.value = resultado.id_proveedor;
-                    document.getElementById('nuevo-proveedor-nombre').value = '';
-                    document.getElementById('nuevo-proveedor-rif').value = '';
-                    modalProveedor.close();
-                } else {
-                    alert(resultado.mensaje);
-                }
-            } finally {
-                btn.disabled = false;
-            }
-        };
-    }
+        } finally {
+            btn.disabled = false;
+        }
+    };
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -187,15 +140,14 @@ function initRegistrarMovimiento(config) {
 
         const datos = {
             id_concepto: selectConcepto.value,
-            tipo: tipo,
+            tipo: 'egreso',
             cantidad: cantidad,
             precio_unitario: precio,
             monto_total: Number((cantidad * precio).toFixed(2)),
             fuente: document.getElementById('fuente').value,
             forma_pago: selectFormaPago.value,
             id_banco: selectBanco.value || null,
-            id_cliente: mostrarCliente ? (selectCliente.value || null) : null,
-            id_proveedor: mostrarProveedor ? (selectProveedor.value || null) : null,
+            id_proveedor: selectProveedor.value || null,
             numero_factura: inputNumeroFactura.value.trim() || null,
             fuente_referencia: inputFuenteReferencia.value.trim() || null
         };
@@ -213,7 +165,7 @@ function initRegistrarMovimiento(config) {
                 inputCantidad.value = '1';
                 displayTotal.textContent = '$0.00';
                 if (displayTotalBs) displayTotalBs.textContent = 'Bs. 0,00';
-                mostrarAlerta('¡Movimiento registrado con éxito!');
+                mostrarAlerta('¡Egreso registrado con éxito!');
             } else {
                 alert('Error: ' + resultado.mensaje);
             }
@@ -227,8 +179,7 @@ function initRegistrarMovimiento(config) {
         await cargarConceptos(selectConcepto);
         await cargarFormasPago(selectFormaPago);
         await cargarBancos(selectBanco);
-        if (mostrarCliente) await cargarClientes(selectCliente);
-        if (mostrarProveedor) await cargarProveedores(selectProveedor);
+        await cargarProveedores(selectProveedor);
         calcularTotal();
     }
 

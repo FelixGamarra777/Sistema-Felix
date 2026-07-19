@@ -13,6 +13,8 @@ if (!$data) {
 
 $numero_factura = isset($data['numero_factura']) ? trim($data['numero_factura']) : '';
 $id_cliente     = !empty($data['id_cliente']) ? intval($data['id_cliente']) : null;
+$referencia     = isset($data['referencia']) ? trim($data['referencia']) : '';
+$referencia     = $referencia === '' ? null : $referencia;
 $items          = isset($data['items']) && is_array($data['items']) ? $data['items'] : [];
 $pagos          = isset($data['pagos']) && is_array($data['pagos']) ? $data['pagos'] : [];
 
@@ -100,10 +102,10 @@ try {
 
     // --- Cabecera ---
     $stmt = $pdo->prepare("
-        INSERT INTO facturas (numero_factura, id_cliente, total_usd, total_bs, tasa_bcv, usuario)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO facturas (numero_factura, id_cliente, referencia, total_usd, total_bs, tasa_bcv, usuario)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$numero_factura, $id_cliente, $total_usd, $total_bs, $tasa, $_SESSION['usuario'] ?? null]);
+    $stmt->execute([$numero_factura, $id_cliente, $referencia, $total_usd, $total_bs, $tasa, $_SESSION['usuario'] ?? null]);
     $id_factura = $pdo->lastInsertId();
 
     // --- Forma de pago "principal" para los movimientos (la de mayor monto) ---
@@ -125,8 +127,8 @@ try {
     $stmtMov = $pdo->prepare("
         INSERT INTO movimientos
             (id_concepto, tipo, cantidad, precio_unitario, monto_total, fuente,
-             forma_pago, id_cliente, numero_factura, tasa_bcv, monto_bs, id_factura)
-        VALUES (?, 'ingreso', ?, ?, ?, 'Factura POS', ?, ?, ?, ?, ?, ?)
+             forma_pago, id_cliente, numero_factura, fuente_referencia, tasa_bcv, monto_bs, id_factura)
+        VALUES (?, 'ingreso', ?, ?, ?, 'Factura POS', ?, ?, ?, ?, ?, ?, ?)
     ");
 
     foreach ($items as $item) {
@@ -160,7 +162,7 @@ try {
         $monto_bs = $tasa > 0 ? round($monto * $tasa, 2) : null;
         $stmtMov->execute([
             $id_concepto, $cantidad, $precio, $monto,
-            $pagoPrincipal, $id_cliente, $numero_factura,
+            $pagoPrincipal, $id_cliente, $numero_factura, $referencia,
             $tasa > 0 ? $tasa : null, $monto_bs, $id_factura
         ]);
     }

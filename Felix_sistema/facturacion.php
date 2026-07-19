@@ -10,7 +10,7 @@ require_once 'includes/header.php';
     <div id="alert-message" class="alert"></div>
     <div class="pos-grid">
         <div class="form-group">
-            <label for="numero-factura">N&deg; de Factura (correlativo)</label>
+            <label for="numero-factura">N&deg; de Factura (opcional, correlativo autom&aacute;tico)</label>
             <input type="text" id="numero-factura" placeholder="Cargando..." />
         </div>
         <div class="form-group">
@@ -21,6 +21,10 @@ require_once 'includes/header.php';
                 </select>
                 <button type="button" id="btn-open-modal-cliente" class="btn-icon" title="Agregar Cliente">+</button>
             </div>
+        </div>
+        <div class="form-group">
+            <label for="referencia-factura">Referencia (opcional)</label>
+            <input type="text" id="referencia-factura" placeholder="Ej: N&deg; de transferencia, nota" />
         </div>
     </div>
 </section>

@@ -93,9 +93,9 @@ require_once 'includes/header.php';
 </section>
 
 <?php require_once 'includes/footer.php'; ?>
-<script src="assets/js/registrar-movimiento.js"></script>
+<script src="assets/js/registrar-egreso.js"></script>
 <script>
-initRegistrarMovimiento({ tipo: 'egreso', mostrarProveedor: true });
+initRegistrarEgreso();
 </script>
 </body>
 </html>

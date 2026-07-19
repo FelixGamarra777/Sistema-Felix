@@ -1,5 +1,6 @@
 function initFacturacion() {
     const inputNumero = document.getElementById('numero-factura');
+    const inputReferencia = document.getElementById('referencia-factura');
     const selectCliente = document.getElementById('cliente');
     const inputBuscador = document.getElementById('buscador-pos');
     const contSugerencias = document.getElementById('sugerencias-pos');
@@ -81,11 +82,19 @@ function initFacturacion() {
         });
     }
 
+    // El correlativo se refresca al agregar el primer ítem del carrito,
+    // salvo que el usuario haya escrito un número manual.
+    let numeroManual = false;
+    inputNumero.addEventListener('input', () => { numeroManual = inputNumero.value.trim() !== ''; });
+
     async function cargarCorrelativo() {
         try {
             const respuesta = await fetch('obtener_correlativo.php');
             const resultado = await respuesta.json();
-            if (resultado.exito) inputNumero.value = resultado.numero_factura;
+            if (resultado.exito) {
+                inputNumero.value = resultado.numero_factura;
+                numeroManual = false;
+            }
         } catch (e) { console.error(e); }
     }
 
@@ -139,6 +148,7 @@ function initFacturacion() {
 
     // ---------- Carrito ----------
     function agregarAlCarrito(producto, desdeBuscador = false) {
+        if (carrito.length === 0 && !numeroManual) cargarCorrelativo();
         const cantidad = parseInt(inputCantidad.value) || 1;
         const esProducto = producto.categoria === 'producto';
 
@@ -460,6 +470,7 @@ function initFacturacion() {
         const datos = {
             numero_factura: inputNumero.value.trim(),
             id_cliente: selectCliente.value || null,
+            referencia: inputReferencia.value.trim() || null,
             items: carrito.map(i => ({
                 id_concepto: i.id_concepto,
                 cantidad: i.cantidad,
@@ -495,6 +506,7 @@ function initFacturacion() {
                 }
                 carrito = [];
                 pagos = [];
+                inputReferencia.value = '';
                 ocultarVuelto();
                 renderCarrito();
                 renderPagos();

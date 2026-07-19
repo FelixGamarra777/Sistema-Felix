@@ -51,6 +51,7 @@ erDiagram
         decimal total_usd
         decimal total_bs
         decimal tasa_bcv
+        varchar referencia "opcional"
         varchar usuario "quien facturo"
     }
 
