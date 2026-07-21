@@ -181,6 +181,30 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
         }
     }
 
+    // ---- 3b. Eliminar objetos heredados de esquemas antiguos ----
+    // Versiones viejas de `facturas` tenían la columna `id_movimiento_asociado`
+    // y la FK `fk_fac_movimiento` (hacia `movimientos`) que el código actual ya
+    // no usa. Con un DEFAULT inválido (0) esa FK rompe TODO INSERT de factura con
+    // error 1452. Se elimina primero la FK y luego la columna huérfana.
+    $llavesObsoletas = [
+        ['facturas', 'fk_fac_movimiento'],
+    ];
+    foreach ($llavesObsoletas as [$tabla, $nombreFk]) {
+        if (existeLlaveForanea($pdo, $tabla, $nombreFk)) {
+            try { $pdo->exec("ALTER TABLE `$tabla` DROP FOREIGN KEY `$nombreFk`"); }
+            catch (\Exception $e) { /* si no se puede, no se detiene el sistema */ }
+        }
+    }
+    $columnasObsoletas = [
+        ['facturas', 'id_movimiento_asociado'],
+    ];
+    foreach ($columnasObsoletas as [$tabla, $columna]) {
+        if (existeColumna($pdo, $tabla, $columna)) {
+            try { $pdo->exec("ALTER TABLE `$tabla` DROP COLUMN `$columna`"); }
+            catch (\Exception $e) { /* idem */ }
+        }
+    }
+
     // ---- 4. Reparar movimientos "huérfanos" (id_concepto que no existe) ----
     // Ej: los registros viejos con id_concepto = 0 que ya tienes en tu tabla.
     $stmt = $pdo->prepare("SELECT id_concepto FROM conceptos WHERE nombre = ?");
