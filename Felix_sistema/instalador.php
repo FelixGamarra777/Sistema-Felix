@@ -160,7 +160,16 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
         ],
         'facturas' => [
+            // Orden importante: cada columna se agrega solo si falta, y las
+            // cláusulas AFTER apuntan a columnas que ya existen en este punto.
+            'numero_factura'  => "VARCHAR(50) NOT NULL DEFAULT '' AFTER id_factura",
+            'fecha_factura'   => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP AFTER numero_factura",
+            'id_cliente'      => "BIGINT UNSIGNED NULL AFTER fecha_factura",
+            'total_usd'       => "DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER id_cliente",
+            'total_bs'        => "DECIMAL(18,2) NOT NULL DEFAULT 0 AFTER total_usd",
+            'tasa_bcv'        => "DECIMAL(14,4) NOT NULL DEFAULT 0 AFTER total_bs",
             'referencia'      => "VARCHAR(150) NULL AFTER tasa_bcv",
+            'usuario'         => "VARCHAR(50) NULL AFTER referencia",
         ],
     ];
 
