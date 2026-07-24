@@ -31,7 +31,9 @@ function initPOS(config) {
 
     // ---------- Carga inicial ----------
     async function cargarCatalogo() {
-        const respuesta = await fetch('obtener_conceptos.php');
+        // Catálogo restringido al dominio del panel: el POS de ventas solo ve
+        // ítems de venta y el de egresos solo ítems de compra (más los 'ambos').
+        const respuesta = await fetch('obtener_conceptos.php?modulo=' + config.modulo);
         const resultado = await respuesta.json();
         if (resultado.exito) {
             catalogo = resultado.datos;
@@ -586,6 +588,7 @@ function initFacturacion() {
         correlativoUrl: 'obtener_correlativo.php',
         endpoint: 'guardar_factura.php',
         docNombre: 'Factura',
+        modulo: 'venta',                 // catálogo restringido a ítems de venta
         descuentaStock: true,            // una venta descuenta inventario
         cargarPersonas: cargarClientes,
         personaVacio: 'Consumidor final',

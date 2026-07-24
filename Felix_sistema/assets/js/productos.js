@@ -13,6 +13,7 @@ function initProductos() {
     const inputPrecio = document.getElementById('prod-precio');
     const inputStock = document.getElementById('prod-stock');
     const inputFactor = document.getElementById('prod-factor');
+    const selectModulo = document.getElementById('prod-modulo');
     const grupoStock = document.getElementById('grupo-stock');
     const grupoFactor = document.getElementById('grupo-factor');
     const tituloModal = document.getElementById('modal-producto-titulo');
@@ -36,6 +37,7 @@ function initProductos() {
         inputPrecio.value = '';
         inputStock.value = '0';
         inputFactor.value = '1';
+        selectModulo.value = 'ambos';
         alternarCamposInventario();
     });
 
@@ -50,7 +52,7 @@ function initProductos() {
             }
         } catch (error) {
             console.error(error);
-            cuerpoTabla.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="9" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
         }
     }
 
@@ -70,9 +72,15 @@ function initProductos() {
         );
 
         if (filtrados.length === 0) {
-            cuerpoTabla.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay productos/servicios que coincidan.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay productos/servicios que coincidan.</td></tr>';
             return;
         }
+
+        const etiquetaModulo = {
+            venta: '<span class="badge-producto">Ventas</span>',
+            compra: '<span class="badge-egreso">Compras</span>',
+            ambos: 'Ambos'
+        };
 
         cuerpoTabla.innerHTML = '';
         filtrados.forEach(p => {
@@ -95,6 +103,7 @@ function initProductos() {
                     <td>${precioBs}</td>
                     <td>${stock}</td>
                     <td>${factorTxt}</td>
+                    <td>${etiquetaModulo[p.modulo_destino] || 'Ambos'}</td>
                     <td>
                         <button class="submit-btn btn-info" style="width:auto; padding: 6px 12px;" onclick="editarProducto(${p.id_concepto})">Editar</button>
                         <button class="delete-btn" onclick="eliminarProducto(${p.id_concepto})">Eliminar</button>
@@ -114,6 +123,7 @@ function initProductos() {
         inputPrecio.value = p.precio_unitario !== null ? p.precio_unitario : '';
         inputStock.value = p.stock !== null ? p.stock : '0';
         inputFactor.value = p.factor_mayor !== null && p.factor_mayor !== undefined ? p.factor_mayor : '1';
+        selectModulo.value = p.modulo_destino || 'ambos';
         alternarCamposInventario();
         modalProducto.modal.classList.add('show');
         inputNombre.focus();
@@ -149,7 +159,8 @@ function initProductos() {
             grupo: inputGrupo.value.trim() || null,
             precio_unitario: inputPrecio.value !== '' ? Number(inputPrecio.value) : null,
             stock: inputStock.value !== '' ? Number(inputStock.value) : 0,
-            factor_mayor: inputFactor.value !== '' ? Number(inputFactor.value) : 1
+            factor_mayor: inputFactor.value !== '' ? Number(inputFactor.value) : 1,
+            modulo_destino: selectModulo.value
         };
 
         const esEdicion = inputId.value !== '';

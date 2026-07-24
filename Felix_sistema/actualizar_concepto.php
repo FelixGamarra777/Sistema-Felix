@@ -19,6 +19,9 @@ $stock     = ($categoria === 'producto')
 // para empaques fraccionados; si es inválido o <= 0 se usa 1 (compra/venta 1:1).
 $factor    = ($categoria === 'producto' && isset($data['factor_mayor']) && floatval($data['factor_mayor']) > 0)
                 ? round(floatval($data['factor_mayor']), 2) : 1;
+// Catálogo destino: venta (POS), compra (Egreso mayorista) o ambos.
+$modulo    = in_array($data['modulo_destino'] ?? '', ['venta', 'compra', 'ambos'])
+                ? $data['modulo_destino'] : 'ambos';
 
 if ($id <= 0 || $nombre === '') {
     echo json_encode(["exito" => false, "mensaje" => "Datos incompletos: id y nombre son obligatorios."]);
@@ -38,8 +41,8 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare("UPDATE conceptos SET nombre = ?, categoria = ?, grupo = ?, precio_unitario = ?, stock = ?, factor_mayor = ? WHERE id_concepto = ?");
-    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock, $factor, $id]);
+    $stmt = $pdo->prepare("UPDATE conceptos SET nombre = ?, categoria = ?, grupo = ?, precio_unitario = ?, stock = ?, factor_mayor = ?, modulo_destino = ? WHERE id_concepto = ?");
+    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock, $factor, $modulo, $id]);
 
     echo json_encode(["exito" => true]);
 } catch (Exception $e) {

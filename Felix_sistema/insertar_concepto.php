@@ -23,6 +23,9 @@ $stock     = ($categoria === 'producto')
 // para empaques fraccionados; si es inválido o <= 0 se usa 1 (compra/venta 1:1).
 $factor    = ($categoria === 'producto' && isset($data['factor_mayor']) && floatval($data['factor_mayor']) > 0)
                 ? round(floatval($data['factor_mayor']), 2) : 1;
+// Catálogo destino: venta (POS), compra (Egreso mayorista) o ambos.
+$modulo    = in_array($data['modulo_destino'] ?? '', ['venta', 'compra', 'ambos'])
+                ? $data['modulo_destino'] : 'ambos';
 
 if ($precio !== null && $precio < 0) {
     echo json_encode(["exito" => false, "mensaje" => "El precio no puede ser negativo."]);
@@ -38,8 +41,8 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO conceptos (nombre, categoria, grupo, precio_unitario, stock, factor_mayor) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock, $factor]);
+    $stmt = $pdo->prepare("INSERT INTO conceptos (nombre, categoria, grupo, precio_unitario, stock, factor_mayor, modulo_destino) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock, $factor, $modulo]);
 
     echo json_encode(["exito" => true, "id_concepto" => $pdo->lastInsertId()]);
 } catch (Exception $e) {

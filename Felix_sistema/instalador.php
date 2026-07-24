@@ -164,6 +164,11 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             // existentes se compran y venden 1:1 hasta configurarles una
             // presentación mayor).
             'factor_mayor'    => "DECIMAL(10,2) NOT NULL DEFAULT 1.00 AFTER stock",
+            // Catálogos independientes: 'venta' (solo aparece en el POS de
+            // facturación), 'compra' (solo en el POS de egresos mayoristas) o
+            // 'ambos'. DEFAULT 'ambos' => retrocompatible: los conceptos
+            // existentes se siguen viendo en los dos paneles hasta clasificarlos.
+            'modulo_destino'  => "ENUM('venta','compra','ambos') NOT NULL DEFAULT 'ambos' AFTER factor_mayor",
             'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
         ],
         'facturas' => [

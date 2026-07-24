@@ -11,6 +11,7 @@ function initRegistrarEgreso() {
         correlativoUrl: 'obtener_correlativo.php?tipo=egreso',
         endpoint: 'guardar_egreso.php',
         docNombre: 'Comprobante',
+        modulo: 'compra',                // catálogo restringido a ítems de compra mayorista
         descuentaStock: false,           // una compra al mayor NO descuenta stock (lo repone)
         esMayorista: true,               // muestra el factor de conversión mayor→detal en el catálogo
         cargarPersonas: cargarProveedores,

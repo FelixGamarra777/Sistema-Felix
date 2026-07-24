@@ -137,7 +137,7 @@ try {
     }
 
     // --- Ítems + inventario (AUMENTA) + movimientos (tipo egreso) ---
-    $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock, factor_mayor FROM conceptos WHERE id_concepto = ? FOR UPDATE");
+    $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock, factor_mayor, modulo_destino FROM conceptos WHERE id_concepto = ? FOR UPDATE");
     $stmtItem = $pdo->prepare("
         INSERT INTO factura_items (id_factura, id_concepto, descripcion, cantidad, precio_unitario, monto_total)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -161,6 +161,14 @@ try {
         if (!$concepto) {
             $pdo->rollBack();
             echo json_encode(["exito" => false, "mensaje" => "Un producto del carrito ya no existe en el catálogo."]);
+            exit;
+        }
+
+        // Catálogos independientes: una compra mayorista NO puede incluir un
+        // ítem de venta al detal (evita mezclar dominios).
+        if (!in_array($concepto['modulo_destino'], ['compra', 'ambos'])) {
+            $pdo->rollBack();
+            echo json_encode(["exito" => false, "mensaje" => "\"{$concepto['nombre']}\" es un ítem de venta al detal y no puede comprarse en el Egreso mayorista."]);
             exit;
         }
 

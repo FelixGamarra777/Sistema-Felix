@@ -118,7 +118,7 @@ try {
 
     // --- Ítems + inventario + movimientos ---
     $advertencias = [];
-    $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock FROM conceptos WHERE id_concepto = ? FOR UPDATE");
+    $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock, modulo_destino FROM conceptos WHERE id_concepto = ? FOR UPDATE");
     $stmtItem = $pdo->prepare("
         INSERT INTO factura_items (id_factura, id_concepto, descripcion, cantidad, precio_unitario, monto_total)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -142,6 +142,14 @@ try {
         if (!$concepto) {
             $pdo->rollBack();
             echo json_encode(["exito" => false, "mensaje" => "Un producto del carrito ya no existe en el catálogo."]);
+            exit;
+        }
+
+        // Catálogos independientes: una factura de venta NO puede incluir un
+        // insumo mayorista de compra (evita mezclar dominios).
+        if (!in_array($concepto['modulo_destino'], ['venta', 'ambos'])) {
+            $pdo->rollBack();
+            echo json_encode(["exito" => false, "mensaje" => "\"{$concepto['nombre']}\" es un insumo de compra mayorista y no puede venderse en el POS."]);
             exit;
         }
 

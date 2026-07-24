@@ -34,11 +34,12 @@ require_once 'includes/header.php';
                     <th>Precio (Bs.)</th>
                     <th>Stock</th>
                     <th>Factor mayor</th>
+                    <th>Disponible en</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="cuerpo-tabla">
-                <tr><td colspan="8" style="text-align:center;">Cargando catálogo...</td></tr>
+                <tr><td colspan="9" style="text-align:center;">Cargando catálogo...</td></tr>
             </tbody>
         </table>
     </div>
@@ -61,6 +62,15 @@ require_once 'includes/header.php';
                 <option value="producto">Producto (con inventario)</option>
                 <option value="servicio">Servicio (sin inventario)</option>
             </select>
+        </div>
+        <div class="form-group">
+            <label for="prod-modulo">Disponible en (catálogo)</label>
+            <select id="prod-modulo" style="margin-bottom: 0.3rem;">
+                <option value="ambos">Ambos paneles</option>
+                <option value="venta">Solo Ventas (POS de facturación)</option>
+                <option value="compra">Solo Compras (Egreso mayorista)</option>
+            </select>
+            <small style="color:#6c757d;">Controla en qué panel aparece. Ej: "Resma de hojas" &rarr; Solo Compras; "Hoja" o "Lápiz" &rarr; Solo Ventas.</small>
         </div>
         <div class="form-group">
             <label for="prod-grupo">Categoría del panel POS (ej: Cuadernos, Fotocopias)</label>
