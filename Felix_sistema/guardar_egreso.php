@@ -170,9 +170,13 @@ try {
         // La cantidad del carrito son PRESENTACIONES mayoristas (ej. 2 Resmas) y
         // cada una repone `factor_mayor` unidades de detal (ej. 500 hojas), así
         // que el stock aumenta cantidad × factor. Ej: 2 Resmas × 500 = +1.000 u.
+        // El factor admite decimales (empaques fraccionados); como el stock se
+        // lleva en unidades enteras, las unidades netas se redondean.
         if ($concepto['categoria'] === 'producto' && $concepto['stock'] !== null) {
-            $factor = max(1, intval($concepto['factor_mayor']));
-            $stmtStock->execute([$cantidad * $factor, $id_concepto]);
+            $factor = floatval($concepto['factor_mayor']);
+            if ($factor <= 0) $factor = 1;
+            $unidades_netas = (int)round($cantidad * $factor);
+            $stmtStock->execute([$unidades_netas, $id_concepto]);
         }
 
         $monto_bs = $tasa > 0 ? round($monto * $tasa, 2) : null;

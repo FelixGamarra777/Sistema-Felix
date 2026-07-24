@@ -158,10 +158,12 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             'precio_unitario' => "DECIMAL(12,2) NULL AFTER categoria",
             'stock'           => "INT NULL AFTER precio_unitario",
             // Factor de conversión mayor→detal: unidades de venta (detal) que
-            // repone UNA presentación mayorista. Ej: 1 Resma = 500 hojas => 500.
-            // DEFAULT 1 => retrocompatible (los productos existentes se compran
-            // y venden 1:1 hasta que se les configure una presentación mayor).
-            'factor_mayor'    => "INT NOT NULL DEFAULT 1 AFTER stock",
+            // repone UNA presentación mayorista (bulto, caja, rema, paquete).
+            // Ej: 1 Resma = 500 hojas => 500. DECIMAL para admitir empaques
+            // fraccionados. DEFAULT 1.00 => retrocompatible (los productos
+            // existentes se compran y venden 1:1 hasta configurarles una
+            // presentación mayor).
+            'factor_mayor'    => "DECIMAL(10,2) NOT NULL DEFAULT 1.00 AFTER stock",
             'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
         ],
         'facturas' => [
@@ -249,6 +251,15 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
         }
     }
 
+    // ---- 3d. Migrar tipos de columnas cuando el esquema quedó desfasado ----
+    // factor_mayor nació como INT; ahora debe ser DECIMAL(10,2) para admitir
+    // empaques fraccionados (ej. medias cajas). Se convierte solo si aún es INT.
+    if (existeColumna($pdo, 'conceptos', 'factor_mayor') &&
+        columnaDataType($pdo, 'conceptos', 'factor_mayor') !== 'decimal') {
+        try { $pdo->exec("ALTER TABLE `conceptos` MODIFY COLUMN `factor_mayor` DECIMAL(10,2) NOT NULL DEFAULT 1.00"); }
+        catch (\Exception $e) { /* si no se puede, no se detiene el sistema */ }
+    }
+
     // ---- 4. Reparar movimientos "huérfanos" (id_concepto que no existe) ----
     // Ej: los registros viejos con id_concepto = 0 que ya tienes en tu tabla.
     $stmt = $pdo->prepare("SELECT id_concepto FROM conceptos WHERE nombre = ?");
@@ -324,6 +335,15 @@ function existeColumna(PDO $pdo, $tabla, $columna) {
     ");
     $stmt->execute([$tabla, $columna]);
     return $stmt->fetchColumn() > 0;
+}
+
+function columnaDataType(PDO $pdo, $tabla, $columna) {
+    $stmt = $pdo->prepare("
+        SELECT LOWER(DATA_TYPE) FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?
+    ");
+    $stmt->execute([$tabla, $columna]);
+    return $stmt->fetchColumn();
 }
 
 function columnaEsNoNula(PDO $pdo, $tabla, $columna) {

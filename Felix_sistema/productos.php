@@ -77,8 +77,8 @@ require_once 'includes/header.php';
         </div>
         <div class="form-group" id="grupo-factor">
             <label for="prod-factor">Unidades por presentación mayor (factor de compra)</label>
-            <input type="number" id="prod-factor" step="1" min="1" value="1" placeholder="1" style="margin-bottom: 0.3rem;">
-            <small style="color:#6c757d;">Cuántas unidades al detal repone <strong>una</strong> presentación al comprar en el Egreso. Ej: 1 Resma = 500 hojas &rarr; 500. Si se compra y vende igual, deje 1.</small>
+            <input type="number" id="prod-factor" step="0.01" min="0.01" value="1" placeholder="1" style="margin-bottom: 0.3rem;">
+            <small style="color:#6c757d;">Cuántas unidades al detal repone <strong>un</strong> bulto, caja, rema o paquete al comprar en el Egreso. Ej: 1 Rema = 500 hojas &rarr; 500; 1 caja de bolígrafos = 12. Admite decimales. Si se compra y vende igual, deje 1.</small>
         </div>
         <button id="btn-guardar-producto" class="submit-btn">Guardar</button>
     </div>

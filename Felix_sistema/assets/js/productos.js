@@ -83,7 +83,7 @@ function initProductos() {
             const stock = esProducto
                 ? `<span class="${parseInt(p.stock) <= 0 ? 'stock-bajo' : ''}">${p.stock}</span>`
                 : 'N/A';
-            const factor = parseInt(p.factor_mayor) || 1;
+            const factor = parseFloat(p.factor_mayor) || 1;
             const factorTxt = (esProducto && factor > 1) ? `1 pres. = ${factor} u` : (esProducto ? '1 : 1' : 'N/A');
 
             cuerpoTabla.innerHTML += `

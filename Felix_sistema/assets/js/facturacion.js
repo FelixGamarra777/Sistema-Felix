@@ -80,7 +80,7 @@ function initPOS(config) {
             // En el POS de egresos (compras al mayor) se avisa cuántas unidades
             // al detal repone cada presentación, para que quede claro que la
             // cantidad se cuenta en presentaciones (ej. Resmas), no en hojas.
-            const factor = parseInt(p.factor_mayor) || 1;
+            const factor = parseFloat(p.factor_mayor) || 1;
             const factorTxt = (config.esMayorista && esProducto && factor > 1)
                 ? `<span class="tile-stock">1 pres = ${factor} u</span>` : '';
             const btn = document.createElement('button');

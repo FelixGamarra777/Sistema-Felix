@@ -19,9 +19,10 @@ $precio    = (isset($data['precio_unitario']) && $data['precio_unitario'] !== ''
 $stock     = ($categoria === 'producto')
                 ? (isset($data['stock']) && $data['stock'] !== '' ? intval($data['stock']) : 0)
                 : null;
-// Factor de conversión mayor→detal (solo aplica a productos). Mínimo 1.
-$factor    = ($categoria === 'producto' && isset($data['factor_mayor']) && intval($data['factor_mayor']) > 0)
-                ? intval($data['factor_mayor']) : 1;
+// Factor de conversión mayor→detal (solo aplica a productos). Admite decimales
+// para empaques fraccionados; si es inválido o <= 0 se usa 1 (compra/venta 1:1).
+$factor    = ($categoria === 'producto' && isset($data['factor_mayor']) && floatval($data['factor_mayor']) > 0)
+                ? round(floatval($data['factor_mayor']), 2) : 1;
 
 if ($precio !== null && $precio < 0) {
     echo json_encode(["exito" => false, "mensaje" => "El precio no puede ser negativo."]);
