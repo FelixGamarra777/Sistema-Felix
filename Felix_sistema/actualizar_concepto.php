@@ -15,6 +15,9 @@ $precio    = (isset($data['precio_unitario']) && $data['precio_unitario'] !== ''
 $stock     = ($categoria === 'producto')
                 ? (isset($data['stock']) && $data['stock'] !== '' ? intval($data['stock']) : 0)
                 : null;
+// Factor de conversión mayor→detal (solo aplica a productos). Mínimo 1.
+$factor    = ($categoria === 'producto' && isset($data['factor_mayor']) && intval($data['factor_mayor']) > 0)
+                ? intval($data['factor_mayor']) : 1;
 
 if ($id <= 0 || $nombre === '') {
     echo json_encode(["exito" => false, "mensaje" => "Datos incompletos: id y nombre son obligatorios."]);
@@ -34,8 +37,8 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare("UPDATE conceptos SET nombre = ?, categoria = ?, grupo = ?, precio_unitario = ?, stock = ? WHERE id_concepto = ?");
-    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock, $id]);
+    $stmt = $pdo->prepare("UPDATE conceptos SET nombre = ?, categoria = ?, grupo = ?, precio_unitario = ?, stock = ?, factor_mayor = ? WHERE id_concepto = ?");
+    $stmt->execute([$nombre, $categoria, $grupo, $precio, $stock, $factor, $id]);
 
     echo json_encode(["exito" => true]);
 } catch (Exception $e) {

@@ -137,7 +137,7 @@ try {
     }
 
     // --- Ítems + inventario (AUMENTA) + movimientos (tipo egreso) ---
-    $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock FROM conceptos WHERE id_concepto = ? FOR UPDATE");
+    $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock, factor_mayor FROM conceptos WHERE id_concepto = ? FOR UPDATE");
     $stmtItem = $pdo->prepare("
         INSERT INTO factura_items (id_factura, id_concepto, descripcion, cantidad, precio_unitario, monto_total)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -167,8 +167,12 @@ try {
         $stmtItem->execute([$id_factura, $id_concepto, $concepto['nombre'], $cantidad, $precio, $monto]);
 
         // Inventario: una compra al mayor REPONE stock (solo productos gestionados).
+        // La cantidad del carrito son PRESENTACIONES mayoristas (ej. 2 Resmas) y
+        // cada una repone `factor_mayor` unidades de detal (ej. 500 hojas), así
+        // que el stock aumenta cantidad × factor. Ej: 2 Resmas × 500 = +1.000 u.
         if ($concepto['categoria'] === 'producto' && $concepto['stock'] !== null) {
-            $stmtStock->execute([$cantidad, $id_concepto]);
+            $factor = max(1, intval($concepto['factor_mayor']));
+            $stmtStock->execute([$cantidad * $factor, $id_concepto]);
         }
 
         $monto_bs = $tasa > 0 ? round($monto * $tasa, 2) : null;

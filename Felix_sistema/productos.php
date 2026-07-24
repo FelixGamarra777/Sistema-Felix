@@ -33,11 +33,12 @@ require_once 'includes/header.php';
                     <th>Precio (USD)</th>
                     <th>Precio (Bs.)</th>
                     <th>Stock</th>
+                    <th>Factor mayor</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="cuerpo-tabla">
-                <tr><td colspan="7" style="text-align:center;">Cargando catálogo...</td></tr>
+                <tr><td colspan="8" style="text-align:center;">Cargando catálogo...</td></tr>
             </tbody>
         </table>
     </div>
@@ -71,8 +72,13 @@ require_once 'includes/header.php';
             <input type="number" id="prod-precio" step="0.01" min="0" placeholder="0.00" style="margin-bottom: 1rem;">
         </div>
         <div class="form-group" id="grupo-stock">
-            <label for="prod-stock">Stock inicial (unidades)</label>
+            <label for="prod-stock">Stock inicial (unidades al detal)</label>
             <input type="number" id="prod-stock" step="1" placeholder="0" style="margin-bottom: 1rem;">
+        </div>
+        <div class="form-group" id="grupo-factor">
+            <label for="prod-factor">Unidades por presentación mayor (factor de compra)</label>
+            <input type="number" id="prod-factor" step="1" min="1" value="1" placeholder="1" style="margin-bottom: 0.3rem;">
+            <small style="color:#6c757d;">Cuántas unidades al detal repone <strong>una</strong> presentación al comprar en el Egreso. Ej: 1 Resma = 500 hojas &rarr; 500. Si se compra y vende igual, deje 1.</small>
         </div>
         <button id="btn-guardar-producto" class="submit-btn">Guardar</button>
     </div>

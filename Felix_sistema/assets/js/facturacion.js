@@ -77,10 +77,16 @@ function initPOS(config) {
             const stockTxt = esProducto
                 ? `<span class="tile-stock ${parseInt(p.stock) <= 0 ? 'stock-bajo' : ''}">stock: ${p.stock}</span>`
                 : '<span class="tile-stock">servicio</span>';
+            // En el POS de egresos (compras al mayor) se avisa cuántas unidades
+            // al detal repone cada presentación, para que quede claro que la
+            // cantidad se cuenta en presentaciones (ej. Resmas), no en hojas.
+            const factor = parseInt(p.factor_mayor) || 1;
+            const factorTxt = (config.esMayorista && esProducto && factor > 1)
+                ? `<span class="tile-stock">1 pres = ${factor} u</span>` : '';
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'pos-tile';
-            btn.innerHTML = `<span class="tile-nombre">${p.nombre}</span><span class="tile-precio">${precio}</span>${stockTxt}`;
+            btn.innerHTML = `<span class="tile-nombre">${p.nombre}</span><span class="tile-precio">${precio}</span>${stockTxt}${factorTxt}`;
             btn.onclick = () => agregarAlCarrito(p);
             contCatalogo.appendChild(btn);
         });

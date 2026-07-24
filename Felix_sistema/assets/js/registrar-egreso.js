@@ -12,6 +12,7 @@ function initRegistrarEgreso() {
         endpoint: 'guardar_egreso.php',
         docNombre: 'Comprobante',
         descuentaStock: false,           // una compra al mayor NO descuenta stock (lo repone)
+        esMayorista: true,               // muestra el factor de conversión mayor→detal en el catálogo
         cargarPersonas: cargarProveedores,
         personaVacio: 'Sin proveedor',
         personaKey: 'id_proveedor',

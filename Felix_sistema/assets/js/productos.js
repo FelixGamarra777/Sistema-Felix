@@ -12,14 +12,20 @@ function initProductos() {
     const listaGrupos = document.getElementById('lista-grupos');
     const inputPrecio = document.getElementById('prod-precio');
     const inputStock = document.getElementById('prod-stock');
+    const inputFactor = document.getElementById('prod-factor');
     const grupoStock = document.getElementById('grupo-stock');
+    const grupoFactor = document.getElementById('grupo-factor');
     const tituloModal = document.getElementById('modal-producto-titulo');
 
     let catalogo = [];
 
-    selectCategoria.addEventListener('change', () => {
-        grupoStock.style.display = selectCategoria.value === 'producto' ? '' : 'none';
-    });
+    // El stock y el factor de conversión mayorista solo aplican a productos.
+    function alternarCamposInventario() {
+        const esProducto = selectCategoria.value === 'producto';
+        grupoStock.style.display = esProducto ? '' : 'none';
+        grupoFactor.style.display = esProducto ? '' : 'none';
+    }
+    selectCategoria.addEventListener('change', alternarCamposInventario);
 
     btnNuevo.addEventListener('click', () => {
         tituloModal.textContent = 'Nuevo Producto / Servicio';
@@ -29,7 +35,8 @@ function initProductos() {
         inputGrupo.value = '';
         inputPrecio.value = '';
         inputStock.value = '0';
-        grupoStock.style.display = '';
+        inputFactor.value = '1';
+        alternarCamposInventario();
     });
 
     async function cargarCatalogo() {
@@ -43,7 +50,7 @@ function initProductos() {
             }
         } catch (error) {
             console.error(error);
-            cuerpoTabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="8" style="text-align:center; color:red;">Error de comunicación con el servidor.</td></tr>';
         }
     }
 
@@ -63,7 +70,7 @@ function initProductos() {
         );
 
         if (filtrados.length === 0) {
-            cuerpoTabla.innerHTML = '<tr><td colspan="7" style="text-align:center;">No hay productos/servicios que coincidan.</td></tr>';
+            cuerpoTabla.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay productos/servicios que coincidan.</td></tr>';
             return;
         }
 
@@ -76,6 +83,8 @@ function initProductos() {
             const stock = esProducto
                 ? `<span class="${parseInt(p.stock) <= 0 ? 'stock-bajo' : ''}">${p.stock}</span>`
                 : 'N/A';
+            const factor = parseInt(p.factor_mayor) || 1;
+            const factorTxt = (esProducto && factor > 1) ? `1 pres. = ${factor} u` : (esProducto ? '1 : 1' : 'N/A');
 
             cuerpoTabla.innerHTML += `
                 <tr>
@@ -85,6 +94,7 @@ function initProductos() {
                     <td>${precioUsd}</td>
                     <td>${precioBs}</td>
                     <td>${stock}</td>
+                    <td>${factorTxt}</td>
                     <td>
                         <button class="submit-btn btn-info" style="width:auto; padding: 6px 12px;" onclick="editarProducto(${p.id_concepto})">Editar</button>
                         <button class="delete-btn" onclick="eliminarProducto(${p.id_concepto})">Eliminar</button>
@@ -103,7 +113,8 @@ function initProductos() {
         inputGrupo.value = p.grupo || '';
         inputPrecio.value = p.precio_unitario !== null ? p.precio_unitario : '';
         inputStock.value = p.stock !== null ? p.stock : '0';
-        grupoStock.style.display = p.categoria === 'producto' ? '' : 'none';
+        inputFactor.value = p.factor_mayor !== null && p.factor_mayor !== undefined ? p.factor_mayor : '1';
+        alternarCamposInventario();
         modalProducto.modal.classList.add('show');
         inputNombre.focus();
     };
@@ -137,7 +148,8 @@ function initProductos() {
             categoria: selectCategoria.value,
             grupo: inputGrupo.value.trim() || null,
             precio_unitario: inputPrecio.value !== '' ? Number(inputPrecio.value) : null,
-            stock: inputStock.value !== '' ? Number(inputStock.value) : 0
+            stock: inputStock.value !== '' ? Number(inputStock.value) : 0,
+            factor_mayor: inputFactor.value !== '' ? Number(inputFactor.value) : 1
         };
 
         const esEdicion = inputId.value !== '';

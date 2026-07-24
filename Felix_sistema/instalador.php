@@ -157,6 +157,11 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             'grupo'           => "VARCHAR(50) NULL AFTER categoria",
             'precio_unitario' => "DECIMAL(12,2) NULL AFTER categoria",
             'stock'           => "INT NULL AFTER precio_unitario",
+            // Factor de conversión mayor→detal: unidades de venta (detal) que
+            // repone UNA presentación mayorista. Ej: 1 Resma = 500 hojas => 500.
+            // DEFAULT 1 => retrocompatible (los productos existentes se compran
+            // y venden 1:1 hasta que se les configure una presentación mayor).
+            'factor_mayor'    => "INT NOT NULL DEFAULT 1 AFTER stock",
             'fecha_creacion'  => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP",
         ],
         'facturas' => [

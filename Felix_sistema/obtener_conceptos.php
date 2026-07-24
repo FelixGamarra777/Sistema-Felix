@@ -7,7 +7,7 @@ $q         = isset($_GET['q']) ? trim($_GET['q']) : '';
 $categoria = isset($_GET['categoria']) ? trim($_GET['categoria']) : '';
 
 try {
-    $sql = "SELECT id_concepto, nombre, categoria, grupo, precio_unitario, stock FROM conceptos";
+    $sql = "SELECT id_concepto, nombre, categoria, grupo, precio_unitario, stock, factor_mayor FROM conceptos";
     $conditions = [];
     $params = [];
 
