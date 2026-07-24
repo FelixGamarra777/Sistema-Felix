@@ -5,9 +5,12 @@ require_once 'conexion.php';
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 $stmt = $pdo->prepare("
-    SELECT f.*, c.nombre_empresa AS cliente, c.cedula_rif
+    SELECT f.*,
+           c.nombre_empresa AS cliente,   c.cedula_rif AS cliente_rif,
+           pr.nombre_empresa AS proveedor, pr.cedula_rif AS proveedor_rif
     FROM facturas f
-    LEFT JOIN clientes c ON f.id_cliente = c.id_cliente
+    LEFT JOIN clientes c     ON f.id_cliente   = c.id_cliente
+    LEFT JOIN proveedores pr ON f.id_proveedor = pr.id_proveedor
     WHERE f.id_factura = ?
 ");
 $stmt->execute([$id]);
@@ -15,9 +18,18 @@ $factura = $stmt->fetch();
 
 if (!$factura) {
     http_response_code(404);
-    echo "Factura no encontrada.";
+    echo "Comprobante no encontrado.";
     exit;
 }
+
+// El mismo ticket sirve para ventas (ingreso) y compras al mayor (egreso).
+$esEgreso   = (($factura['tipo'] ?? 'ingreso') === 'egreso');
+$tituloDoc  = $esEgreso ? 'COMPROBANTE DE EGRESO' : 'FACTURA';
+$etiquetaNumero = $esEgreso ? 'COMPROBANTE N&deg;' : 'FACTURA N&deg;';
+$etiquetaPersona = $esEgreso ? 'PROVEEDOR' : 'CLIENTE';
+$personaNombre = $esEgreso ? ($factura['proveedor'] ?: 'Sin proveedor') : ($factura['cliente'] ?: 'Consumidor final');
+$personaRif = $esEgreso ? $factura['proveedor_rif'] : $factura['cliente_rif'];
+$piePagina  = $esEgreso ? 'Comprobante de compra al mayor' : '¡Gracias por su compra!';
 
 $stmt = $pdo->prepare("SELECT descripcion, cantidad, precio_unitario, monto_total FROM factura_items WHERE id_factura = ?");
 $stmt->execute([$id]);
@@ -39,7 +51,7 @@ function bs($v)  { return 'Bs. ' . number_format((float)$v, 2, ',', '.'); }
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>Factura <?php echo htmlspecialchars($factura['numero_factura']); ?></title>
+    <title><?php echo $esEgreso ? 'Comprobante' : 'Factura'; ?> <?php echo htmlspecialchars($factura['numero_factura']); ?></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -72,13 +84,14 @@ function bs($v)  { return 'Bs. ' . number_format((float)$v, 2, ',', '.'); }
 <body>
     <div class="centro negrita">INVERSIONES COMPUNET SEGURA, C.A.</div>
     <div class="centro">Gestión de Papelería</div>
+    <div class="centro negrita"><?php echo $tituloDoc; ?></div>
     <div class="sep"></div>
 
-    <div>FACTURA N&deg;: <span class="negrita"><?php echo htmlspecialchars($factura['numero_factura']); ?></span></div>
+    <div><?php echo $etiquetaNumero; ?>: <span class="negrita"><?php echo htmlspecialchars($factura['numero_factura']); ?></span></div>
     <div>FECHA: <?php echo date('d/m/Y h:i A', strtotime($factura['fecha_factura'])); ?></div>
-    <div>CLIENTE: <?php echo htmlspecialchars($factura['cliente'] ?: 'Consumidor final'); ?></div>
-    <?php if ($factura['cedula_rif']): ?>
-    <div>C.I./RIF: <?php echo htmlspecialchars($factura['cedula_rif']); ?></div>
+    <div><?php echo $etiquetaPersona; ?>: <?php echo htmlspecialchars($personaNombre); ?></div>
+    <?php if ($personaRif): ?>
+    <div>C.I./RIF: <?php echo htmlspecialchars($personaRif); ?></div>
     <?php endif; ?>
     <div>ATENDIDO POR: <?php echo htmlspecialchars($factura['usuario'] ?: '-'); ?></div>
     <div class="sep"></div>
@@ -127,7 +140,7 @@ function bs($v)  { return 'Bs. ' . number_format((float)$v, 2, ',', '.'); }
     </table>
 
     <div class="sep"></div>
-    <div class="centro pie">¡Gracias por su compra!</div>
+    <div class="centro pie"><?php echo htmlspecialchars($piePagina); ?></div>
 
     <div class="no-print">
         <button onclick="window.print()">🖨️ Imprimir</button>

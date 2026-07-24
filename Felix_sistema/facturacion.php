@@ -22,10 +22,6 @@ require_once 'includes/header.php';
                 <button type="button" id="btn-open-modal-cliente" class="btn-icon" title="Agregar Cliente">+</button>
             </div>
         </div>
-        <div class="form-group">
-            <label for="referencia-factura">Referencia (opcional)</label>
-            <input type="text" id="referencia-factura" placeholder="Ej: N&deg; de transferencia, nota" />
-        </div>
     </div>
 </section>
 

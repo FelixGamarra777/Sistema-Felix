@@ -243,6 +243,7 @@ function renderizarFilaMovimiento(m, mostrarTipo = true) {
 
     return `
         <tr>
+            <td style="font-weight:bold;">${m.numero_factura || '-'}</td>
             <td>${f}</td>
             <td>${m.concepto}</td>
             ${tipoCol}
@@ -253,7 +254,6 @@ function renderizarFilaMovimiento(m, mostrarTipo = true) {
             <td>${m.fuente}</td>
             <td>${m.forma_pago || '-'}</td>
             <td>${clienteOProveedor}</td>
-            <td>${m.numero_factura || '-'}</td>
             <td><button class="delete-btn" onclick="eliminarMovimiento(${m.id}, window.recargarTabla)">Eliminar</button></td>
         </tr>`;
 }

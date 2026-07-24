@@ -163,9 +163,14 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             // Orden importante: cada columna se agrega solo si falta, y las
             // cláusulas AFTER apuntan a columnas que ya existen en este punto.
             'numero_factura'  => "VARCHAR(50) NOT NULL DEFAULT '' AFTER id_factura",
-            'fecha_factura'   => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP AFTER numero_factura",
+            // 'tipo' distingue una factura de venta (ingreso) de un comprobante de
+            // compra al mayor (egreso). DEFAULT 'ingreso' => retrocompatible: las
+            // facturas existentes quedan correctamente marcadas como ingresos.
+            'tipo'            => "ENUM('ingreso','egreso') NOT NULL DEFAULT 'ingreso' AFTER numero_factura",
+            'fecha_factura'   => "TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP AFTER tipo",
             'id_cliente'      => "BIGINT UNSIGNED NULL AFTER fecha_factura",
-            'total_usd'       => "DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER id_cliente",
+            'id_proveedor'    => "BIGINT UNSIGNED NULL AFTER id_cliente",
+            'total_usd'       => "DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER id_proveedor",
             'total_bs'        => "DECIMAL(18,2) NOT NULL DEFAULT 0 AFTER total_usd",
             'tasa_bcv'        => "DECIMAL(14,4) NOT NULL DEFAULT 0 AFTER total_bs",
             'referencia'      => "VARCHAR(150) NULL AFTER tasa_bcv",
@@ -243,6 +248,9 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
             ON DELETE SET NULL ON UPDATE CASCADE"],
         ['facturas', 'fk_fact_cliente', "ADD CONSTRAINT `fk_fact_cliente`
             FOREIGN KEY (`id_cliente`) REFERENCES `clientes`(`id_cliente`)
+            ON DELETE SET NULL ON UPDATE CASCADE"],
+        ['facturas', 'fk_fact_proveedor', "ADD CONSTRAINT `fk_fact_proveedor`
+            FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores`(`id_proveedor`)
             ON DELETE SET NULL ON UPDATE CASCADE"],
         ['factura_items', 'fk_item_factura', "ADD CONSTRAINT `fk_item_factura`
             FOREIGN KEY (`id_factura`) REFERENCES `facturas`(`id_factura`)

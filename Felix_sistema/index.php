@@ -48,6 +48,7 @@ require_once 'includes/header.php';
         <table>
             <thead>
                 <tr>
+                    <th>N&deg; Factura</th>
                     <th>Fecha y Hora</th>
                     <th>Concepto</th>
                     <th>Tipo</th>
@@ -58,7 +59,6 @@ require_once 'includes/header.php';
                     <th>Fuente</th>
                     <th>Forma Pago</th>
                     <th>Cliente/Proveedor</th>
-                    <th>N&deg; Factura</th>
                     <th>Acción</th>
                 </tr>
             </thead>

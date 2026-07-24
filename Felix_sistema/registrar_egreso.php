@@ -1,98 +1,118 @@
 <?php
 require_once 'includes/auth.php';
 $paginaActiva = 'registrar_egreso';
-$tituloPagina = 'Registrar Egreso';
+$tituloPagina = 'Registrar Egreso (Compras al Mayor)';
 require_once 'includes/header.php';
 ?>
 
 <section class="card-panel">
-    <h2>Registrar Nuevo Egreso</h2>
+    <h2>Datos del Egreso (Compra al Mayor)</h2>
     <div id="alert-message" class="alert"></div>
-
-    <form id="form-movimiento">
-        <input type="hidden" name="tipo" value="egreso" />
-
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="concepto">Concepto</label>
-                <div class="input-group">
-                    <select id="concepto" name="concepto" required>
-                        <option value="" disabled selected>Cargando conceptos...</option>
-                    </select>
-                    <button type="button" id="btn-open-modal" class="btn-icon" title="Agregar Concepto">+</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="cantidad">Cantidad</label>
-                <input type="number" id="cantidad" name="cantidad" min="1" value="1" required />
-            </div>
-
-            <div class="form-group">
-                <label for="precio">Precio Unit. (USD)</label>
-                <input type="number" id="precio" name="precio" step="0.01" min="0.01" placeholder="0.00" required />
-            </div>
-
-            <div class="form-group">
-                <label>Total Calculado (USD)</label>
-                <div class="total-box" id="total-display">$0.00</div>
-            </div>
-
-            <div class="form-group">
-                <label>Total en Bolívares (Bs.)</label>
-                <div class="total-box" id="total-display-bs" style="background-color: #fff3cd; border-color: #ffeeba; color: #856404;">Bs. 0,00</div>
-            </div>
-
-            <div class="form-group">
-                <label for="fuente">Fuente / Proveedor</label>
-                <input type="text" id="fuente" name="fuente" placeholder="Ej: Proveedor General" required />
-            </div>
-
-            <div class="form-group">
-                <label for="forma_pago">Forma de Pago</label>
-                <select id="forma_pago" name="forma_pago" required>
-                    <option value="" disabled selected>Cargando...</option>
+    <div class="pos-grid">
+        <div class="form-group">
+            <label for="numero-factura">N&deg; de Comprobante (opcional, correlativo autom&aacute;tico)</label>
+            <input type="text" id="numero-factura" placeholder="Cargando..." />
+        </div>
+        <div class="form-group">
+            <label for="cliente">Proveedor (opcional)</label>
+            <div class="input-group">
+                <select id="cliente">
+                    <option value="">Sin proveedor</option>
                 </select>
-            </div>
-
-            <div class="form-group">
-                <label for="banco">Banco (opcional)</label>
-                <div class="input-group">
-                    <select id="banco" name="banco">
-                        <option value="">Sin especificar</option>
-                    </select>
-                    <button type="button" id="btn-open-modal-banco" class="btn-icon" title="Agregar Banco">+</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="proveedor">Proveedor (opcional)</label>
-                <div class="input-group">
-                    <select id="proveedor" name="proveedor">
-                        <option value="">Sin especificar</option>
-                    </select>
-                    <button type="button" id="btn-open-modal-proveedor" class="btn-icon" title="Agregar Proveedor">+</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="numero_factura">N&deg; Factura (opcional)</label>
-                <input type="text" id="numero_factura" name="numero_factura" placeholder="Ej: 00123" />
-            </div>
-
-            <div class="form-group">
-                <label for="fuente_referencia">Referencia (opcional)</label>
-                <input type="text" id="fuente_referencia" name="fuente_referencia" placeholder="Ej: N&deg; de transferencia" />
+                <button type="button" id="btn-open-modal-proveedor" class="btn-icon" title="Agregar Proveedor">+</button>
             </div>
         </div>
+    </div>
+</section>
 
-        <div style="text-align: right;">
-            <button type="submit" class="submit-btn" style="max-width: 250px; background-color: var(--danger);">Registrar Egreso</button>
+<section class="card-panel">
+    <h2>Panel de Compra</h2>
+    <div id="pos-chips" class="filtros-rapidos" style="margin-bottom: 1rem;"></div>
+    <div class="pos-panel-layout">
+        <div id="pos-catalogo" class="pos-catalogo-grid">
+            <p style="padding: 1rem; color: #6c757d;">Cargando catálogo...</p>
         </div>
-    </form>
+        <aside class="pos-numpad-col">
+            <label for="cantidad-pos">Cantidad a agregar</label>
+            <input type="number" id="cantidad-pos" min="1" value="1" class="numpad-display" />
+            <div class="numpad" id="numpad">
+                <button type="button" data-np="7">7</button>
+                <button type="button" data-np="8">8</button>
+                <button type="button" data-np="9">9</button>
+                <button type="button" data-np="4">4</button>
+                <button type="button" data-np="5">5</button>
+                <button type="button" data-np="6">6</button>
+                <button type="button" data-np="1">1</button>
+                <button type="button" data-np="2">2</button>
+                <button type="button" data-np="3">3</button>
+                <button type="button" data-np="." class="np-accion">.</button>
+                <button type="button" data-np="0">0</button>
+                <button type="button" data-np="borrar" class="np-accion">⌫</button>
+                <button type="button" data-np="limpiar" class="np-accion" style="grid-column: span 3;">C — Limpiar</button>
+                <button type="button" data-np="listo" class="np-ok">✔ Listo</button>
+            </div>
+            <div class="numpad-destino" id="numpad-destino">Escribiendo en: <strong>Cantidad</strong></div>
+        </aside>
+    </div>
+
+    <div class="form-group buscador-wrapper" style="margin-top: 1.5rem;">
+        <label for="buscador-pos">¿No encuentra el botón? Busque en el catálogo</label>
+        <input type="text" id="buscador-pos" placeholder="Escriba para buscar... (ej: resma, lápices)" autocomplete="off" />
+        <div id="sugerencias-pos" class="sugerencias"></div>
+    </div>
+
+    <div class="table-responsive" style="margin-top: 1rem;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Insumo / Producto</th>
+                    <th>Cantidad</th>
+                    <th>Costo Unit. ($)</th>
+                    <th>Subtotal ($)</th>
+                    <th>Subtotal (Bs.)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-carrito">
+                <tr><td colspan="6" style="text-align:center;">El carrito está vacío.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pos-totales">
+        <div class="pos-total-box">Total: <span id="total-usd">$0.00</span></div>
+        <div class="pos-total-box bs">Total: <span id="total-bs">Bs. 0,00</span></div>
+    </div>
+</section>
+
+<section class="card-panel">
+    <h2>Pagos al proveedor (puede combinar varios métodos)</h2>
+    <div class="fastcash-row">
+        <button type="button" class="fastcash exacto" data-exacto="USD">🎯 Monto Exacto $</button>
+        <button type="button" class="fastcash exacto" data-exacto="BS">🎯 Monto Exacto Bs.</button>
+        <button type="button" class="fastcash" data-billete="1">$1</button>
+        <button type="button" class="fastcash" data-billete="5">$5</button>
+        <button type="button" class="fastcash" data-billete="10">$10</button>
+        <button type="button" class="fastcash" data-billete="20">$20</button>
+        <button type="button" class="fastcash" data-billete="50">$50</button>
+        <button type="button" class="fastcash" data-billete="100">$100</button>
+    </div>
+    <div id="vuelto-box" class="vuelto-box" style="display:none;"></div>
+    <div id="lineas-pago"></div>
+    <button type="button" id="btn-agregar-pago" class="submit-btn btn-info" style="width:auto; padding: 0.5rem 1.2rem;">+ Agregar Pago</button>
+    <div class="pos-totales" style="margin-top: 1rem;">
+        <div class="pos-total-box" id="box-restante">Restante: <span id="restante-usd">$0.00</span></div>
+    </div>
+</section>
+
+<section class="card-panel" style="display:flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-end;">
+    <button type="button" id="btn-vaciar" class="submit-btn btn-danger-pos" style="width:auto; padding: 0.8rem 1.5rem;">🗑️ Vaciar Carrito</button>
+    <button type="button" id="btn-guardar" class="submit-btn btn-success" style="width:auto; padding: 0.8rem 1.5rem;">💾 Guardar Transacción</button>
+    <button type="button" id="btn-guardar-imprimir" class="submit-btn" style="width:auto; padding: 0.8rem 1.5rem;">🖨️ Guardar e Imprimir Comprobante</button>
 </section>
 
 <?php require_once 'includes/footer.php'; ?>
+<script src="assets/js/facturacion.js"></script>
 <script src="assets/js/registrar-egreso.js"></script>
 <script>
 initRegistrarEgreso();

@@ -1,4 +1,15 @@
 <?php
+// guardar_egreso.php
+// -----------------------------------------------------------------------
+// Punto ÚNICO de entrada de egresos (compras al mayor) desde el POS de egresos.
+// Es el espejo de guardar_factura.php: misma potencia transaccional (ACID con
+// PDO: beginTransaction / commit / rollBack) y bloqueos de exclusividad, pero:
+//   - marca la factura como tipo='egreso' (comprobante de compra),
+//   - la persona es el Proveedor (no el Cliente),
+//   - el inventario AUMENTA (reposición) en vez de descontarse.
+// Reutiliza las tablas existentes: facturas, factura_items, factura_pagos y
+// movimientos (retrocompatible, sin migraciones destructivas).
+// -----------------------------------------------------------------------
 require_once 'conexion.php';
 require_once 'includes/verificar_sesion_api.php';
 require_once 'includes/tasa_bcv.php';
@@ -12,7 +23,7 @@ if (!$data) {
 }
 
 $numero_factura = isset($data['numero_factura']) ? trim($data['numero_factura']) : '';
-$id_cliente     = !empty($data['id_cliente']) ? intval($data['id_cliente']) : null;
+$id_proveedor   = !empty($data['id_proveedor']) ? intval($data['id_proveedor']) : null;
 $referencia     = isset($data['referencia']) ? trim($data['referencia']) : '';
 $referencia     = $referencia === '' ? null : $referencia;
 $items          = isset($data['items']) && is_array($data['items']) ? $data['items'] : [];
@@ -49,7 +60,7 @@ try {
     $infoTasa = obtenerTasaBCV($pdo);
     $tasa = (float)$infoTasa['tasa'];
 
-    // --- Total de la factura ---
+    // --- Total del egreso ---
     $total_usd = 0;
     foreach ($items as $item) {
         $total_usd += intval($item['cantidad']) * floatval($item['precio_unitario']);
@@ -74,38 +85,47 @@ try {
     if (abs($pagado_usd - $total_usd) > 0.10) {
         echo json_encode([
             "exito" => false,
-            "mensaje" => "Los pagos (" . number_format($pagado_usd, 2) . " USD) no cuadran con el total de la factura (" . number_format($total_usd, 2) . " USD)."
+            "mensaje" => "Los pagos (" . number_format($pagado_usd, 2) . " USD) no cuadran con el total del egreso (" . number_format($total_usd, 2) . " USD)."
         ]);
         exit;
     }
 
     $pdo->beginTransaction();
 
-    // --- Correlativo: automático si no se indicó uno manual ---
+    // --- Correlativo de egresos (prefijo EGR-): automático si no se indicó uno ---
     if ($numero_factura === '') {
         $stmt = $pdo->query("
-            SELECT COALESCE(MAX(CAST(numero_factura AS UNSIGNED)), 0) + 1
+            SELECT COALESCE(MAX(CAST(SUBSTRING(numero_factura, 5) AS UNSIGNED)), 0) + 1
             FROM facturas
-            WHERE numero_factura REGEXP '^[0-9]+$'
+            WHERE numero_factura REGEXP '^EGR-[0-9]+$'
             FOR UPDATE
         ");
-        $numero_factura = str_pad((int)$stmt->fetchColumn(), 5, '0', STR_PAD_LEFT);
+        $numero_factura = 'EGR-' . str_pad((int)$stmt->fetchColumn(), 5, '0', STR_PAD_LEFT);
     } else {
         $stmt = $pdo->prepare("SELECT id_factura FROM facturas WHERE numero_factura = ?");
         $stmt->execute([$numero_factura]);
         if ($stmt->fetch()) {
             $pdo->rollBack();
-            echo json_encode(["exito" => false, "mensaje" => "Ya existe una factura con el número $numero_factura."]);
+            echo json_encode(["exito" => false, "mensaje" => "Ya existe un comprobante con el número $numero_factura."]);
             exit;
         }
     }
 
-    // --- Cabecera ---
+    // --- Nombre del proveedor (para la columna "Fuente" del histórico) ---
+    $fuente = 'Compra al Mayor';
+    if ($id_proveedor !== null) {
+        $stmtProv = $pdo->prepare("SELECT nombre_empresa FROM proveedores WHERE id_proveedor = ?");
+        $stmtProv->execute([$id_proveedor]);
+        $nombreProv = $stmtProv->fetchColumn();
+        if ($nombreProv) $fuente = $nombreProv;
+    }
+
+    // --- Cabecera (comprobante de egreso) ---
     $stmt = $pdo->prepare("
-        INSERT INTO facturas (numero_factura, tipo, id_cliente, referencia, total_usd, total_bs, tasa_bcv, usuario)
-        VALUES (?, 'ingreso', ?, ?, ?, ?, ?, ?)
+        INSERT INTO facturas (numero_factura, tipo, id_proveedor, referencia, total_usd, total_bs, tasa_bcv, usuario)
+        VALUES (?, 'egreso', ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$numero_factura, $id_cliente, $referencia, $total_usd, $total_bs, $tasa, $_SESSION['usuario'] ?? null]);
+    $stmt->execute([$numero_factura, $id_proveedor, $referencia, $total_usd, $total_bs, $tasa, $_SESSION['usuario'] ?? null]);
     $id_factura = $pdo->lastInsertId();
 
     // --- Forma de pago "principal" para los movimientos (la de mayor monto) ---
@@ -116,19 +136,18 @@ try {
         if ($usd > $mayor) { $mayor = $usd; $pagoPrincipal = $pago['forma_pago']; }
     }
 
-    // --- Ítems + inventario + movimientos ---
-    $advertencias = [];
+    // --- Ítems + inventario (AUMENTA) + movimientos (tipo egreso) ---
     $stmtConcepto = $pdo->prepare("SELECT nombre, categoria, stock FROM conceptos WHERE id_concepto = ? FOR UPDATE");
     $stmtItem = $pdo->prepare("
         INSERT INTO factura_items (id_factura, id_concepto, descripcion, cantidad, precio_unitario, monto_total)
         VALUES (?, ?, ?, ?, ?, ?)
     ");
-    $stmtStock = $pdo->prepare("UPDATE conceptos SET stock = stock - ? WHERE id_concepto = ?");
+    $stmtStock = $pdo->prepare("UPDATE conceptos SET stock = stock + ? WHERE id_concepto = ?");
     $stmtMov = $pdo->prepare("
         INSERT INTO movimientos
             (id_concepto, tipo, cantidad, precio_unitario, monto_total, fuente,
-             forma_pago, id_cliente, numero_factura, fuente_referencia, tasa_bcv, monto_bs, id_factura)
-        VALUES (?, 'ingreso', ?, ?, ?, 'Factura POS', ?, ?, ?, ?, ?, ?, ?)
+             forma_pago, id_proveedor, numero_factura, fuente_referencia, tasa_bcv, monto_bs, id_factura)
+        VALUES (?, 'egreso', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     foreach ($items as $item) {
@@ -147,22 +166,15 @@ try {
 
         $stmtItem->execute([$id_factura, $id_concepto, $concepto['nombre'], $cantidad, $precio, $monto]);
 
-        // Inventario: solo productos con stock gestionado. Se permite quedar
-        // en negativo, pero se devuelve una advertencia (decisión de negocio).
+        // Inventario: una compra al mayor REPONE stock (solo productos gestionados).
         if ($concepto['categoria'] === 'producto' && $concepto['stock'] !== null) {
             $stmtStock->execute([$cantidad, $id_concepto]);
-            $stockRestante = intval($concepto['stock']) - $cantidad;
-            if ($stockRestante < 0) {
-                $advertencias[] = "⚠️ \"{$concepto['nombre']}\" quedó con stock negativo ($stockRestante).";
-            } elseif ($stockRestante === 0) {
-                $advertencias[] = "\"{$concepto['nombre']}\" quedó sin stock (0).";
-            }
         }
 
         $monto_bs = $tasa > 0 ? round($monto * $tasa, 2) : null;
         $stmtMov->execute([
-            $id_concepto, $cantidad, $precio, $monto,
-            $pagoPrincipal, $id_cliente, $numero_factura, $referencia,
+            $id_concepto, $cantidad, $precio, $monto, $fuente,
+            $pagoPrincipal, $id_proveedor, $numero_factura, $referencia,
             $tasa > 0 ? $tasa : null, $monto_bs, $id_factura
         ]);
     }
@@ -194,7 +206,7 @@ try {
         "numero_factura" => $numero_factura,
         "total_usd" => $total_usd,
         "total_bs" => $total_bs,
-        "advertencias" => $advertencias
+        "advertencias" => []
     ]);
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

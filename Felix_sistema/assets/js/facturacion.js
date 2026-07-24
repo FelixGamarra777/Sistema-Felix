@@ -1,6 +1,10 @@
-function initFacturacion() {
+// Motor de Punto de Venta reutilizable.
+// Lo comparten Facturación (ingresos) y Registrar Egreso (compras al mayor):
+// misma ergonomía (catálogo táctil, numpad, buscador, carrito reactivo, pagos
+// mixtos y barra de acciones). Las diferencias entre ingreso y egreso viajan
+// en `config` (endpoint, persona cliente/proveedor, efecto sobre inventario…).
+function initPOS(config) {
     const inputNumero = document.getElementById('numero-factura');
-    const inputReferencia = document.getElementById('referencia-factura');
     const selectCliente = document.getElementById('cliente');
     const inputBuscador = document.getElementById('buscador-pos');
     const contSugerencias = document.getElementById('sugerencias-pos');
@@ -89,7 +93,7 @@ function initFacturacion() {
 
     async function cargarCorrelativo() {
         try {
-            const respuesta = await fetch('obtener_correlativo.php');
+            const respuesta = await fetch(config.correlativoUrl);
             const resultado = await respuesta.json();
             if (resultado.exito) {
                 inputNumero.value = resultado.numero_factura;
@@ -99,8 +103,8 @@ function initFacturacion() {
     }
 
     async function cargarCatalogosAuxiliares() {
-        await cargarClientes(selectCliente);
-        selectCliente.querySelector('option').textContent = 'Consumidor final';
+        await config.cargarPersonas(selectCliente);
+        selectCliente.querySelector('option').textContent = config.personaVacio;
 
         const rFormas = await (await fetch('obtener_formas_pago.php')).json();
         if (rFormas.exito) formasPago = rFormas.datos;
@@ -152,7 +156,7 @@ function initFacturacion() {
         const cantidad = parseInt(inputCantidad.value) || 1;
         const esProducto = producto.categoria === 'producto';
 
-        if (esProducto && producto.stock !== null) {
+        if (config.descuentaStock && esProducto && producto.stock !== null) {
             const enCarrito = carrito.find(i => i.id_concepto === producto.id_concepto);
             const totalPedido = cantidad + (enCarrito ? enCarrito.cantidad : 0);
             if (parseInt(producto.stock) - totalPedido < 0) {
@@ -467,10 +471,13 @@ function initFacturacion() {
             return;
         }
 
+        // La referencia de la cabecera ya no tiene campo propio arriba: se toma
+        // de la primera línea de pago que traiga referencia (junto a Banco).
+        const pagoConRef = pagos.find(p => p.referencia && String(p.referencia).trim() !== '');
         const datos = {
             numero_factura: inputNumero.value.trim(),
-            id_cliente: selectCliente.value || null,
-            referencia: inputReferencia.value.trim() || null,
+            [config.personaKey]: selectCliente.value || null,
+            referencia: pagoConRef ? String(pagoConRef.referencia).trim() : null,
             items: carrito.map(i => ({
                 id_concepto: i.id_concepto,
                 cantidad: i.cantidad,
@@ -489,7 +496,7 @@ function initFacturacion() {
         const btnGI = document.getElementById('btn-guardar-imprimir');
         try {
             btnG.disabled = true; btnGI.disabled = true;
-            const respuesta = await fetch('guardar_factura.php', {
+            const respuesta = await fetch(config.endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
@@ -498,15 +505,14 @@ function initFacturacion() {
 
             if (resultado.exito) {
                 if (resultado.advertencias && resultado.advertencias.length > 0) {
-                    alert('Factura guardada.\n\n' + resultado.advertencias.join('\n'));
+                    alert(config.docNombre + ' guardado.\n\n' + resultado.advertencias.join('\n'));
                 }
-                mostrarAlerta(`✅ Factura ${resultado.numero_factura} guardada: ${formatearUSD(resultado.total_usd)} / ${formatearBs(resultado.total_bs)}`, 5000);
+                mostrarAlerta(`✅ ${config.docNombre} ${resultado.numero_factura} guardado: ${formatearUSD(resultado.total_usd)} / ${formatearBs(resultado.total_bs)}`, 5000);
                 if (imprimir) {
                     window.open('factura_ticket.php?id=' + resultado.id_factura, '_blank');
                 }
                 carrito = [];
                 pagos = [];
-                inputReferencia.value = '';
                 ocultarVuelto();
                 renderCarrito();
                 renderPagos();
@@ -526,29 +532,32 @@ function initFacturacion() {
     document.getElementById('btn-guardar').addEventListener('click', () => guardarFactura(false));
     document.getElementById('btn-guardar-imprimir').addEventListener('click', () => guardarFactura(true));
 
-    // ---------- Modal cliente (reutiliza el del footer) ----------
-    const modalCliente = initModal('modal-cliente', 'btn-open-modal-cliente', 'close-modal-cliente', 'nuevo-cliente-nombre');
-    document.getElementById('btn-guardar-cliente').onclick = async () => {
-        const nombre = document.getElementById('nuevo-cliente-nombre').value.trim();
-        const rif = document.getElementById('nuevo-cliente-rif').value.trim();
+    // ---------- Modal de persona: Cliente (POS) o Proveedor (Egreso) ----------
+    // Ambos modales del footer comparten estructura (nombre, RIF, tipo), así que
+    // se cablean con la misma función usando los ids que trae la config.
+    const pm = config.personaModal;
+    const modalPersona = initModal(pm.modalId, pm.openBtnId, pm.closeBtnId, pm.nombreId);
+    document.getElementById(pm.saveBtnId).onclick = async () => {
+        const nombre = document.getElementById(pm.nombreId).value.trim();
+        const rif = document.getElementById(pm.rifId).value.trim();
         if (!nombre || !rif) { alert('Nombre y Cédula/RIF son obligatorios.'); return; }
-        const respuesta = await fetch('insertar_cliente.php', {
+        const respuesta = await fetch(pm.endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 nombre_empresa: nombre,
                 cedula_rif: rif,
-                tipo_persona: document.getElementById('nuevo-cliente-tipo').value
+                tipo_persona: document.getElementById(pm.tipoId).value
             })
         });
         const resultado = await respuesta.json();
         if (resultado.exito) {
-            await cargarClientes(selectCliente);
-            selectCliente.querySelector('option').textContent = 'Consumidor final';
-            selectCliente.value = resultado.id_cliente;
-            document.getElementById('nuevo-cliente-nombre').value = '';
-            document.getElementById('nuevo-cliente-rif').value = '';
-            modalCliente.close();
+            await config.cargarPersonas(selectCliente);
+            selectCliente.querySelector('option').textContent = config.personaVacio;
+            selectCliente.value = resultado[pm.idKey];
+            document.getElementById(pm.nombreId).value = '';
+            document.getElementById(pm.rifId).value = '';
+            modalPersona.close();
         } else {
             alert(resultado.mensaje);
         }
@@ -563,4 +572,28 @@ function initFacturacion() {
         agregarLineaPago(0);
         renderCarrito();
     })();
+}
+
+// Configuración del POS de INGRESOS (Facturación).
+function initFacturacion() {
+    initPOS({
+        correlativoUrl: 'obtener_correlativo.php',
+        endpoint: 'guardar_factura.php',
+        docNombre: 'Factura',
+        descuentaStock: true,            // una venta descuenta inventario
+        cargarPersonas: cargarClientes,
+        personaVacio: 'Consumidor final',
+        personaKey: 'id_cliente',
+        personaModal: {
+            modalId: 'modal-cliente',
+            openBtnId: 'btn-open-modal-cliente',
+            closeBtnId: 'close-modal-cliente',
+            nombreId: 'nuevo-cliente-nombre',
+            rifId: 'nuevo-cliente-rif',
+            tipoId: 'nuevo-cliente-tipo',
+            saveBtnId: 'btn-guardar-cliente',
+            endpoint: 'insertar_cliente.php',
+            idKey: 'id_cliente'
+        }
+    });
 }
