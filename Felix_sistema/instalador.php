@@ -210,6 +210,40 @@ function verificarYRepararBaseDeDatos(PDO $pdo) {
         }
     }
 
+    // ---- 3c. Garantizar que las columnas OPCIONALES acepten NULL ----
+    // En esquemas antiguos varias de estas columnas quedaron como NOT NULL, lo
+    // que rompe operaciones legítimas. El caso típico: una venta a "Consumidor
+    // final" (sin cliente) o una compra sin proveedor debe guardar id_cliente /
+    // id_proveedor = NULL, pero un id_cliente NOT NULL lo rechaza con:
+    //   SQLSTATE[23000]: Column 'id_cliente' cannot be null
+    // Se corrige la nullabilidad ANTES de (re)crear las llaves foráneas, porque
+    // las FK con ON DELETE SET NULL exigen que la columna sea nullable.
+    $columnasNullables = [
+        'facturas' => [
+            'id_cliente'   => 'BIGINT UNSIGNED NULL',
+            'id_proveedor' => 'BIGINT UNSIGNED NULL',
+            'referencia'   => 'VARCHAR(150) NULL',
+        ],
+        'movimientos' => [
+            'id_banco'          => 'BIGINT UNSIGNED NULL',
+            'id_cliente'        => 'BIGINT UNSIGNED NULL',
+            'id_proveedor'      => 'BIGINT UNSIGNED NULL',
+            'numero_factura'    => 'VARCHAR(50) NULL',
+            'fuente_referencia' => 'VARCHAR(150) NULL',
+            'tasa_bcv'          => 'DECIMAL(14,4) NULL',
+            'monto_bs'          => 'DECIMAL(18,2) NULL',
+            'id_factura'        => 'BIGINT UNSIGNED NULL',
+        ],
+    ];
+    foreach ($columnasNullables as $tabla => $columnas) {
+        foreach ($columnas as $columna => $definicion) {
+            if (existeColumna($pdo, $tabla, $columna) && columnaEsNoNula($pdo, $tabla, $columna)) {
+                try { $pdo->exec("ALTER TABLE `$tabla` MODIFY COLUMN `$columna` $definicion"); }
+                catch (\Exception $e) { /* si no se puede, no se detiene el sistema */ }
+            }
+        }
+    }
+
     // ---- 4. Reparar movimientos "huérfanos" (id_concepto que no existe) ----
     // Ej: los registros viejos con id_concepto = 0 que ya tienes en tu tabla.
     $stmt = $pdo->prepare("SELECT id_concepto FROM conceptos WHERE nombre = ?");
@@ -285,6 +319,15 @@ function existeColumna(PDO $pdo, $tabla, $columna) {
     ");
     $stmt->execute([$tabla, $columna]);
     return $stmt->fetchColumn() > 0;
+}
+
+function columnaEsNoNula(PDO $pdo, $tabla, $columna) {
+    $stmt = $pdo->prepare("
+        SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?
+    ");
+    $stmt->execute([$tabla, $columna]);
+    return $stmt->fetchColumn() === 'NO';
 }
 
 function existeLlaveForanea(PDO $pdo, $tabla, $nombreFk) {
